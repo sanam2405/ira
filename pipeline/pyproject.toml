@@ -1,0 +1,8 @@
+[project]
+name = "ira-pipeline"
+version = "0.1.0"
+author = "Manas Pratim Biswas <manaspb2405@gmail.com>"
+description = "Ira, one lyric at a time"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
