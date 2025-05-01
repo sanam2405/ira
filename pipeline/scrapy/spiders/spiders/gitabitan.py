@@ -18,11 +18,18 @@ class GitabitanItem(BaseModel):
     def identifier(self) -> str:
         return str(self.url)
 
+    """
+    TODO:
+    - Extract metadata of the song
+    - Extract metadata of author and song timeline
+    - Analyze and create a unique identifier or genre for classification
+    """
+
 
 class GitabitanSpider(scrapy.Spider):
     name = "gitabitan"
     base_url = "http://gitabitan.net"
-    song_id_range = range(2120, 2133 + 1)
+    song_id_range = range(1, 2307 + 1)
 
     def start_requests(self):
         for song_id in self.song_id_range:
@@ -68,7 +75,6 @@ class GitabitanSpider(scrapy.Spider):
             title = first_line
         else:
             # If there's only one word, use first two lines
-            # Make sure there's a second line before trying to use it
             title = first_line
             if len(lyrics_lines) > 1:
                 title = f"{first_line} {lyrics_lines[1]}"
