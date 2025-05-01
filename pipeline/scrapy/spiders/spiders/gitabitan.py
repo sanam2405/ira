@@ -22,7 +22,7 @@ class GitabitanItem(BaseModel):
 class GitabitanSpider(scrapy.Spider):
     name = "gitabitan"
     base_url = "http://gitabitan.net"
-    song_id_range = range(1, 111 + 1)
+    song_id_range = range(2120, 2133 + 1)
 
     def start_requests(self):
         for song_id in self.song_id_range:
@@ -60,9 +60,19 @@ class GitabitanSpider(scrapy.Spider):
         if not lyrics_lines:
             return
 
-        # First meaningful line becomes the title
-        title = lyrics_lines[0]
-        # Join all lines with newlines
+        # Check if first line has more than one word
+        first_line = lyrics_lines[0]
+        words_in_first_line = first_line.split()
+
+        if len(words_in_first_line) > 1:
+            title = first_line
+        else:
+            # If there's only one word, use first two lines
+            # Make sure there's a second line before trying to use it
+            title = first_line
+            if len(lyrics_lines) > 1:
+                title = f"{first_line} {lyrics_lines[1]}"
+
         lyrics = "\n".join(lyrics_lines)
 
         item = GitabitanItem(
