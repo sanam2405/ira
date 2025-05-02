@@ -3,6 +3,7 @@ from typing import List, Literal, Optional
 from pydantic import BaseModel, RootModel
 import tiktoken
 from transformers import AutoTokenizer
+import structlog
 
 
 class ItemTokenCount(RootModel[dict[str, int]]):
@@ -27,20 +28,39 @@ class TokenCounter:
     ):
         self.tokenizer = tokenizer
         self.encoding = encoding
-        if tokenizer == "tiktoken":
-            self.encoding = tiktoken.get_encoding(encoding or "cl100k_base")
-        elif tokenizer == "transformers":
-            self.tokenizer = AutoTokenizer.from_pretrained(encoding or "gpt2")
-        else:
-            raise ValueError(f"Unknown tokenizer: {tokenizer}")
+        self.logger = structlog.get_logger(__name__).bind(class_name="TokenCounter")
+        match tokenizer:
+            case "tiktoken":
+                self.encoding = tiktoken.get_encoding(encoding or "cl100k_base")
+                self.logger.info(
+                    "Initialized tiktoken tokenizer", encoding=self.encoding.name
+                )
+            case "transformers":
+                self.tokenizer = AutoTokenizer.from_pretrained(encoding or "gpt2")
+                self.logger.info(
+                    "Initialized transformers tokenizer", model=encoding or "gpt2"
+                )
+            case _:
+                self.logger.error("Unknown tokenizer", tokenizer=tokenizer)
+                raise ValueError(f"Unknown tokenizer: {tokenizer}")
 
     def count(self, text: str) -> int:
-        if self.tokenizer == "tiktoken":
-            return len(self.encoding.encode(text))
-        elif self.tokenizer == "transformers":
-            return len(self.tokenizer.encode(text))
-        else:
-            raise ValueError(f"Unknown tokenizer: {self.tokenizer}")
+        match self.tokenizer:
+            case "tiktoken":
+                count = len(self.encoding.encode(text))
+                self.logger.info("Counted tokens with tiktoken", text=text, count=count)
+                return count
+            case "transformers":
+                count = len(self.tokenizer.encode(text))
+                self.logger.info(
+                    "Counted tokens with transformers", text=text, count=count
+                )
+                return count
+            case _:
+                self.logger.error(
+                    "Unknown tokenizer in count", tokenizer=self.tokenizer
+                )
+                raise ValueError(f"Unknown tokenizer: {self.tokenizer}")
 
 
 def count_tokens_in_jsonl(
@@ -78,12 +98,21 @@ if __name__ == "__main__":
     jsonl_path = "scrapy/gitabitan.jsonl"
     keys_to_count = ["title", "lyrics"]
     # using tiktoken
-    token_counter = TokenCounter(tokenizer="tiktoken", encoding="cl100k_base")
+    # token_counter = TokenCounter(tokenizer="tiktoken", encoding="cl100k_base")
     # using transformers
-    # token_counter = TokenCounter(tokenizer="transformers", encoding="gpt2")
+    token_counter = TokenCounter(tokenizer="transformers", encoding="gpt2")
     result = count_tokens_in_jsonl(jsonl_path, keys_to_count, token_counter)
-    print(
-        "PER ITEM TOKEN COUNTS:", [item.model_dump() for item in result.per_item_counts]
+
+    logger = structlog.get_logger(__name__).bind(context="main")
+    # logger.info(
+    #     "PER ITEM TOKEN COUNTS",
+    #     per_item_token_counts=[item.model_dump() for item in result.per_item_counts],
+    # )
+    logger.info(
+        "TOTAL TOKENS PER KEY",
+        total_tokens_per_key=result.total_counts.model_dump(),
     )
-    print("TOTAL TOKENS PER KEY:", result.total_counts.model_dump())
-    print("TOTAL TOKENS IN FILE:", result.total_tokens)
+    logger.info(
+        "TOTAL TOKENS IN FILE",
+        total_tokens_in_file=result.total_tokens,
+    )
