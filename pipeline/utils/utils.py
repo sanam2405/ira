@@ -26,7 +26,7 @@ class TokenCounter:
         tokenizer: Literal["tiktoken", "transformers"] = "tiktoken",
         encoding: Optional[str] = None,
     ):
-        self.tokenizer = tokenizer
+        self.tokenizer_type = tokenizer
         self.encoding = encoding
         self.logger = structlog.get_logger(__name__).bind(class_name="TokenCounter")
         match tokenizer:
@@ -45,7 +45,7 @@ class TokenCounter:
                 raise ValueError(f"Unknown tokenizer: {tokenizer}")
 
     def count(self, text: str) -> int:
-        match self.tokenizer:
+        match self.tokenizer_type:
             case "tiktoken":
                 count = len(self.encoding.encode(text))
                 self.logger.info("Counted tokens with tiktoken", text=text, count=count)
@@ -58,9 +58,9 @@ class TokenCounter:
                 return count
             case _:
                 self.logger.error(
-                    "Unknown tokenizer in count", tokenizer=self.tokenizer
+                    "Unknown tokenizer in count", tokenizer=self.tokenizer_type
                 )
-                raise ValueError(f"Unknown tokenizer: {self.tokenizer}")
+                raise ValueError(f"Unknown tokenizer: {self.tokenizer_type}")
 
 
 def count_tokens_in_jsonl(
