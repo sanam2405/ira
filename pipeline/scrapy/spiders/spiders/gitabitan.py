@@ -5,7 +5,7 @@ from scrapy.http import TextResponse
 from typing import override
 from pydantic import BaseModel, computed_field
 from .schema import SpiderDomain
-from lxml import etree
+from lxml import etree, html
 
 
 class GitabitanItem(BaseModel):
@@ -14,6 +14,7 @@ class GitabitanItem(BaseModel):
     url: str
     lyrics: str
     metadata: dict
+    citations: list[str]
 
     @computed_field
     @property
@@ -37,6 +38,7 @@ class GitabitanSpider(scrapy.Spider):
 
     MAP_KEYS = {
         "রচনাকাল": "composition_date",
+        "রচনাস্থান": "composition_location",
         "কবির বয়স": "poet_age",
         "প্রকাশ": "publication_date",
         "গীতবিতান(পর্যায়;#/পৃ)": "gitabitan_index",
@@ -58,8 +60,10 @@ class GitabitanSpider(scrapy.Spider):
         # Get the td with id=" ccelltd1" (note the space in the id)
         lyrics_element = response.css('td[id=" ccelltd1"]')
         metadata_element = response.css('div[id="remainder"]')
+        citations_element = response.css('div[id="divrbar"]')
         self.logger.info("lyrics_element", lyrics_element=lyrics_element)
         self.logger.info("metadata_element", metadata_element=metadata_element)
+        self.logger.info("citations_element", citations_element=citations_element)
         if not lyrics_element:
             return
 
@@ -100,19 +104,28 @@ class GitabitanSpider(scrapy.Spider):
 
         lyrics = "\n".join(lyrics_lines)
 
-        metadata = self.extract_metadata(metadata_element)
-        metadata = self.convert_metadata_keys(metadata)
+        if metadata_element:
+            metadata = self.parse_metadata(metadata_element)
+            metadata = self.convert_metadata_keys(metadata)
+        else:
+            metadata = {}
+
+        if citations_element:
+            citations = self.parse_citations(citations_element.get())
+        else:
+            citations = []
 
         item = GitabitanItem(
             title=title,
             url=response.url,
             lyrics=lyrics,
             metadata=metadata,
+            citations=citations,
         )
         self.logger.info("item", item=item)
         yield item
 
-    def extract_metadata(self, metadata_element):
+    def parse_metadata(self, metadata_element):
         metadata = {}
         spans = metadata_element.xpath('.//span[contains(@class, "uy11")]')
         for span in spans:
@@ -175,3 +188,33 @@ class GitabitanSpider(scrapy.Spider):
 
     def convert_metadata_keys(self, metadata):
         return {self.MAP_KEYS.get(k, k): v for k, v in metadata.items()}
+
+    def parse_citations(self, divrbar_html):
+        tree = html.fromstring(divrbar_html)
+        citations = []
+        current = []
+        for elem in tree.iterchildren():
+            if elem.tag == "hr":
+                if current:
+                    # Wrap in a dummy div and parse
+                    citation_html = "".join(
+                        [html.tostring(e, encoding="unicode") for e in current]
+                    )
+                    citation_text = (
+                        html.fromstring(f"<div>{citation_html}</div>")
+                        .text_content()
+                        .strip()
+                    )
+                    citations.append(citation_text)
+                    current = []
+            else:
+                current.append(elem)
+        if current:
+            citation_html = "".join(
+                [html.tostring(e, encoding="unicode") for e in current]
+            )
+            citation_text = (
+                html.fromstring(f"<div>{citation_html}</div>").text_content().strip()
+            )
+            citations.append(citation_text)
+        return [c for c in citations if c.strip()]
