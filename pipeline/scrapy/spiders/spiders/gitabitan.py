@@ -6,6 +6,7 @@ from typing import override
 from pydantic import BaseModel, computed_field
 from .schema import SpiderDomain
 from lxml import etree, html
+import re
 
 
 class GitabitanItem(BaseModel):
@@ -50,6 +51,23 @@ class GitabitanSpider(scrapy.Spider):
         "context": "context",
     }
 
+    def convert_metadata_keys(self, metadata):
+        return {self.MAP_KEYS.get(k, k): v for k, v in metadata.items()}
+
+    def clean_text(self, text):
+        # Convert to string if not already
+        if not isinstance(text, str):
+            text = str(text)
+        # Replace non-breaking spaces, tabs, carriage returns, and form feeds with a space
+        text = re.sub(r"[\xa0\t\r\f]", " ", text)
+        # Replace multiple spaces (including those created by above) with a single space
+        text = re.sub(r" +", " ", text)
+        # Replace multiple newlines (with optional spaces/tabs in between) with a single newline
+        text = re.sub(r" *\n+", "\n", text)
+        # Remove leading/trailing whitespace and newlines
+        text = text.strip()
+        return text
+
     def start_requests(self):
         for song_id in self.song_id_range:
             yield Request(
@@ -85,6 +103,7 @@ class GitabitanSpider(scrapy.Spider):
                 and not text.startswith("(")
                 and not text.endswith(")")
             ):
+                text = self.clean_text(text)
                 lyrics_lines.append(text)
 
         if not lyrics_lines:
@@ -103,7 +122,6 @@ class GitabitanSpider(scrapy.Spider):
                 title = f"{first_line} {lyrics_lines[1]}"
 
         lyrics = "\n".join(lyrics_lines)
-
         if metadata_element:
             metadata = self.parse_metadata(metadata_element)
             metadata = self.convert_metadata_keys(metadata)
@@ -156,7 +174,7 @@ class GitabitanSpider(scrapy.Spider):
                     value_parts.extend(text)
             value = "".join(value_parts).strip().replace("\xa0", " ")
             if value:
-                metadata[key] = value
+                metadata[key] = self.clean_text(value)
 
         raag = metadata_element.xpath('.//span[@id="raag"]/text()').get()
         if raag:
@@ -179,15 +197,15 @@ class GitabitanSpider(scrapy.Spider):
                         else [sib.get()]
                     )
                     if text:
+                        if isinstance(text, list):
+                            text = "".join(text)
+                        text = self.clean_text(text)
                         alochona_parts.extend(text)
                 alochona_text = "".join(alochona_parts).strip().replace("\xa0", " ")
                 if alochona_text:
                     metadata["context"] = alochona_text
 
         return metadata
-
-    def convert_metadata_keys(self, metadata):
-        return {self.MAP_KEYS.get(k, k): v for k, v in metadata.items()}
 
     def parse_citations(self, divrbar_html):
         tree = html.fromstring(divrbar_html)
@@ -196,15 +214,12 @@ class GitabitanSpider(scrapy.Spider):
         for elem in tree.iterchildren():
             if elem.tag == "hr":
                 if current:
-                    # Wrap in a dummy div and parse
                     citation_html = "".join(
                         [html.tostring(e, encoding="unicode") for e in current]
                     )
-                    citation_text = (
-                        html.fromstring(f"<div>{citation_html}</div>")
-                        .text_content()
-                        .strip()
-                    )
+                    citation_text = html.fromstring(
+                        f"<div>{citation_html}</div>"
+                    ).text_content()
                     citations.append(citation_text)
                     current = []
             else:
@@ -213,8 +228,9 @@ class GitabitanSpider(scrapy.Spider):
             citation_html = "".join(
                 [html.tostring(e, encoding="unicode") for e in current]
             )
-            citation_text = (
-                html.fromstring(f"<div>{citation_html}</div>").text_content().strip()
-            )
+            citation_text = html.fromstring(
+                f"<div>{citation_html}</div>"
+            ).text_content()
             citations.append(citation_text)
-        return [c for c in citations if c.strip()]
+        cleaned_citations = [self.clean_text(c) for c in citations if c.strip()]
+        return cleaned_citations
