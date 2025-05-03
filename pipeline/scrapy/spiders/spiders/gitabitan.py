@@ -1,9 +1,11 @@
 import scrapy
+import structlog
 from scrapy import Request
 from scrapy.http import TextResponse
 from typing import override
 from pydantic import BaseModel, computed_field
 from .schema import SpiderDomain
+from lxml import etree
 
 
 class GitabitanItem(BaseModel):
@@ -11,6 +13,7 @@ class GitabitanItem(BaseModel):
     title: str
     url: str
     lyrics: str
+    metadata: dict
 
     @computed_field
     @property
@@ -30,6 +33,20 @@ class GitabitanSpider(scrapy.Spider):
     name = "gitabitan"
     base_url = "http://gitabitan.net"
     song_id_range = range(1, 2307 + 1)
+    logger = structlog.get_logger(__name__).bind(class_name="GitabitanSpider")
+
+    MAP_KEYS = {
+        "রচনাকাল": "composition_date",
+        "কবির বয়স": "poet_age",
+        "প্রকাশ": "publication_date",
+        "গীতবিতান(পর্যায়;#/পৃ)": "gitabitan_index",
+        "রাগ / তাল": "raag_taal",
+        "স্বরলিপি": "notation",
+        "স্বরলিপিকার": "notator",
+        "raag": "raag",
+        "taal": "taal",
+        "context": "context",
+    }
 
     def start_requests(self):
         for song_id in self.song_id_range:
@@ -40,7 +57,9 @@ class GitabitanSpider(scrapy.Spider):
     def parse(self, response):
         # Get the td with id=" ccelltd1" (note the space in the id)
         lyrics_element = response.css('td[id=" ccelltd1"]')
-        print("lyrics_element", lyrics_element)
+        metadata_element = response.css('div[id="remainder"]')
+        self.logger.info("lyrics_element", lyrics_element=lyrics_element)
+        self.logger.info("metadata_element", metadata_element=metadata_element)
         if not lyrics_element:
             return
 
@@ -81,10 +100,78 @@ class GitabitanSpider(scrapy.Spider):
 
         lyrics = "\n".join(lyrics_lines)
 
+        metadata = self.extract_metadata(metadata_element)
+        metadata = self.convert_metadata_keys(metadata)
+
         item = GitabitanItem(
             title=title,
             url=response.url,
             lyrics=lyrics,
+            metadata=metadata,
         )
-        print(item)
+        self.logger.info("item", item=item)
         yield item
+
+    def extract_metadata(self, metadata_element):
+        metadata = {}
+        spans = metadata_element.xpath('.//span[contains(@class, "uy11")]')
+        for span in spans:
+            key = (
+                "".join(span.xpath(".//text()").getall())
+                .strip()
+                .rstrip(":")
+                .replace("\xa0", " ")
+            )
+            # Skip keys that start with "লিঙ্ক"
+            if key.startswith("লিঙ্ক"):
+                continue
+            value_parts = []
+            for sib in span.xpath("./following-sibling::node()"):
+                if isinstance(sib.root, etree._Element):
+                    if sib.root.tag == "span" and "uy11" in sib.root.attrib.get(
+                        "class", ""
+                    ):
+                        break
+                    if sib.root.tag == "br":
+                        break
+                text = (
+                    sib.xpath(".//text()").getall()
+                    if isinstance(sib.root, etree._Element)
+                    else [sib.get()]
+                )
+                if text:
+                    value_parts.extend(text)
+            value = "".join(value_parts).strip().replace("\xa0", " ")
+            if value:
+                metadata[key] = value
+
+        raag = metadata_element.xpath('.//span[@id="raag"]/text()').get()
+        if raag:
+            metadata["raag"] = raag.strip()
+        taal = metadata_element.xpath('.//span[@id="taal"]/text()').get()
+        if taal:
+            metadata["taal"] = taal.strip()
+
+        alochona_span = metadata_element.xpath('.//span[contains(text(), "আলোচনা")]')
+        if alochona_span:
+            alochona_p = alochona_span.xpath("./ancestor::p[1]")
+            if alochona_p:
+                alochona_parts = []
+                for sib in alochona_p[0].xpath("./following-sibling::node()"):
+                    if isinstance(sib.root, etree._Element) and sib.root.tag == "hr":
+                        break
+                    text = (
+                        sib.xpath(".//text()").getall()
+                        if isinstance(sib.root, etree._Element)
+                        else [sib.get()]
+                    )
+                    if text:
+                        alochona_parts.extend(text)
+                alochona_text = "".join(alochona_parts).strip().replace("\xa0", " ")
+                if alochona_text:
+                    metadata["context"] = alochona_text
+
+        return metadata
+
+    def convert_metadata_keys(self, metadata):
+        return {self.MAP_KEYS.get(k, k): v for k, v in metadata.items()}
