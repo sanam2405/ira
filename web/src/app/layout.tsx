@@ -58,17 +58,14 @@ export default function RootLayout({
       className={`${mina.variable} ${tagesschrift.variable}`}
     >
       <body>
-        <div className="flex flex-col min-h-screen items-center justify-center">
-          <div className="flex-1 flex flex-col items-center justify-center w-full">
-            <Image
-              src="/logo.svg"
-              alt="Ira"
-              width={100}
-              height={100}
-            />
+        <div
+          className="flex flex-col min-h-screen items-center bg-cover bg-center bg-no-repeat bg-fixed"
+          style={{ backgroundImage: "url(/cover.jpg)" }}
+        >
+          <div className="flex-1 flex flex-col items-center justify-end w-full">
             {children}
           </div>
-          <footer className="w-full text-center text-md pb-4">
+          <footer className="w-full text-center text-2xl pb-4">
             <p className="english">Ira, one lyric at a time</p>
           </footer>
         </div>
