@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "author": "Manas Pratim Biswas <manaspb2405@gmail.com>",
+  "packageManager": "pnpm@8.14.0",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
