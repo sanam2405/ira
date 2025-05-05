@@ -2,22 +2,22 @@
 
 export default function Search() {
   return (
-    <div className="w-full max-w-2xl px-4 mt-auto mb-32">
+    <div className="w-full max-w-2xl px-4 mt-auto mb-12">
       {/* Search Container */}
       <div className="w-full relative hover:scale-105 transition-all duration-300">
         <input
           type="text"
           placeholder="Search lyrics..."
           className="w-full h-14 px-6 rounded-full 
-                   bg-gradient-to-r from-amber-50/90 to-amber-100/90 backdrop-blur-sm
+                   bg-white/20 backdrop-blur-md
                    text-neutral-700 text-lg english
-                   placeholder:text-neutral-400
+                   placeholder:text-neutral-500
                    focus:outline-none
                    shadow-[0_4px_15px_rgba(0,0,0,0.15)]
                    transition-all duration-300
                    hover:shadow-[0_6px_20px_rgba(0,0,0,0.2)]
                    focus:shadow-[0_6px_20px_rgba(0,0,0,0.2)]
-                   border border-amber-200/30"
+                   border border-white/30"
         />
 
         {/* Search Icon */}

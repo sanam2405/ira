@@ -60,7 +60,10 @@ export default function RootLayout({
       <body>
         <div
           className="flex flex-col min-h-screen items-center bg-cover bg-center bg-no-repeat bg-fixed"
-          style={{ backgroundImage: "url(/cover.jpg)" }}
+          style={{
+            backgroundImage: "url(/cover.jpg)",
+            backgroundPosition: "center 45%",
+          }}
         >
           <div className="flex-1 flex flex-col items-center justify-end w-full">
             {children}
