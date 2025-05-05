@@ -22,18 +22,6 @@ export default function Search() {
     if (!searchResults?.length) return;
 
     switch (e.key) {
-      case "ArrowDown":
-        e.preventDefault();
-        setSelectedIndex((prev) =>
-          prev === searchResults.length - 1 ? 0 : prev + 1
-        );
-        break;
-      case "ArrowUp":
-        e.preventDefault();
-        setSelectedIndex((prev) =>
-          prev <= 0 ? searchResults.length - 1 : prev - 1
-        );
-        break;
       case "Escape":
         e.preventDefault();
         setSearchTerm("");
@@ -49,7 +37,7 @@ export default function Search() {
   };
 
   return (
-    <div className="w-full max-w-lg px-4 mt-4 fixed top-0 left-1/2 -translate-x-1/2 z-10">
+    <div className="w-full max-w-lg px-4 mt-8 fixed top-0 left-1/2 -translate-x-1/2 z-10">
       {/* Search Container */}
       <div className="w-full relative hover:scale-105 transition-all duration-300">
         <input
@@ -61,7 +49,7 @@ export default function Search() {
           className="w-full h-12 px-6 rounded-full 
                    bg-white/20 backdrop-blur-md
                    text-neutral-700 text-lg english
-                   placeholder:text-neutral-500
+                   placeholder:text-neutral-900
                    focus:outline-none
                    shadow-[0_4px_15px_rgba(0,0,0,0.15)]
                    transition-all duration-300
@@ -79,7 +67,7 @@ export default function Search() {
                 height="20"
                 viewBox="0 0 24 24"
                 fill="none"
-                className="text-neutral-400"
+                className="text-neutral-900"
               >
                 <circle
                   className="opacity-25"
@@ -102,7 +90,7 @@ export default function Search() {
               height="20"
               viewBox="0 0 20 20"
               fill="none"
-              className="text-neutral-400"
+              className="text-neutral-900"
             >
               <path
                 d="M9 17A8 8 0 1 0 9 1a8 8 0 0 0 0 16zM19 19l-4.35-4.35"
