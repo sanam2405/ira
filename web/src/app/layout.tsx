@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
-import Image from "next/image";
+import Providers from "./providers";
 
 // Mina for Bengali
 const mina = localFont({
@@ -58,20 +58,22 @@ export default function RootLayout({
       className={`${mina.variable} ${tagesschrift.variable}`}
     >
       <body>
-        <div
-          className="flex flex-col min-h-screen items-center bg-cover bg-center bg-no-repeat bg-fixed"
-          style={{
-            backgroundImage: "url(/cover.jpg)",
-            backgroundPosition: "center 45%",
-          }}
-        >
-          <div className="flex-1 flex flex-col items-center justify-end w-full">
-            {children}
+        <Providers>
+          <div
+            className="flex flex-col min-h-screen items-center bg-cover bg-center bg-no-repeat bg-fixed"
+            style={{
+              backgroundImage: "url(/cover.jpg)",
+              backgroundPosition: "center 0",
+            }}
+          >
+            <div className="flex-1 flex flex-col items-center justify-end w-full">
+              {children}
+            </div>
+            <footer className="w-full text-center text-md pb-2">
+              <p className="english">Ira, one lyric at a time</p>
+            </footer>
           </div>
-          <footer className="w-full text-center text-2xl pb-4">
-            <p className="english">Ira, one lyric at a time</p>
-          </footer>
-        </div>
+        </Providers>
       </body>
     </html>
   );
