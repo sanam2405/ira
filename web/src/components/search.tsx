@@ -5,15 +5,48 @@ import { useQuery } from "@tanstack/react-query";
 import { useDebounce } from "use-debounce";
 import { getSearchResults } from "@/utils";
 
+const MAX_THRESHOLD = 3;
+
 export default function Search() {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
 
   const { data: searchResults, isLoading } = useQuery({
     queryKey: ["search", debouncedSearchTerm],
     queryFn: () => getSearchResults(debouncedSearchTerm),
     enabled: debouncedSearchTerm.length > 2,
   });
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!searchResults?.length) return;
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setSelectedIndex((prev) =>
+          prev === searchResults.length - 1 ? 0 : prev + 1
+        );
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setSelectedIndex((prev) =>
+          prev <= 0 ? searchResults.length - 1 : prev - 1
+        );
+        break;
+      case "Escape":
+        e.preventDefault();
+        setSearchTerm("");
+        setSelectedIndex(-1);
+        break;
+      case "Enter":
+        if (selectedIndex >= 0) {
+          const selectedResult = searchResults[selectedIndex];
+          // TODO: Navigate to selectedResult
+        }
+        break;
+    }
+  };
 
   return (
     <div className="w-full max-w-lg px-4 mt-4 fixed top-0 left-1/2 -translate-x-1/2 z-10">
@@ -23,6 +56,7 @@ export default function Search() {
           type="text"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          onKeyDown={handleKeyDown}
           placeholder="Search lyrics..."
           className="w-full h-12 px-6 rounded-full 
                    bg-white/20 backdrop-blur-md
@@ -84,12 +118,21 @@ export default function Search() {
 
       {/* Search Results */}
       {debouncedSearchTerm.length > 2 && searchResults && (
-        <div className="mt-4 bg-white/20 backdrop-blur-md rounded-2xl p-4 shadow-lg">
-          {searchResults.slice(0, 3).map((result, index) => (
+        <div className="mt-4 bg-white/20 backdrop-blur-md rounded-2xl p-4 shadow-lg group">
+          {searchResults.slice(0, MAX_THRESHOLD).map((result, index) => (
             <div key={index}>
-              {index > 0 && <hr className="my-3 border-white/20" />}
-              <div className="text-neutral-700">
-                <h3 className="text-lg font-semibold">{result.title}</h3>
+              {index > 0 && <hr className="border-gray-200/50" />}
+              <div
+                className={`
+                  cursor-pointer rounded-lg p-3 transition-all duration-200
+                  ${index === selectedIndex ? "bg-amber-600/20" : "hover:bg-amber-600/20"}
+                  group-hover:[&:not(:hover)]:opacity-30
+                  hover:opacity-100
+                `}
+              >
+                <div className="text-gray-800">
+                  <h3 className="text-lg font-semibold">{result.title}</h3>
+                </div>
               </div>
             </div>
           ))}
