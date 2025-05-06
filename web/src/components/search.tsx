@@ -38,6 +38,7 @@ export default function Search() {
       case "Enter":
         if (selectedIndex >= 0) {
           const selectedResult = searchResults[selectedIndex];
+          console.log(selectedResult);
           // TODO: Navigate to selectedResult
         }
         break;
