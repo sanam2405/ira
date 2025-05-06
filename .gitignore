@@ -1,4 +1,5 @@
 *.jsonl
 *.json
+!vercel.json
 *.DS_Store
 MUSE.md

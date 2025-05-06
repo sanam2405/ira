@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { useDebounce } from "use-debounce";
 import { getSearchResults } from "@/utils";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useDebounce } from "use-debounce";
 
 const MAX_THRESHOLD = 4;
 

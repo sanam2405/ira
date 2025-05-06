@@ -53,10 +53,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${mina.variable} ${tagesschrift.variable}`}
-    >
+    <html lang="en" className={`${mina.variable} ${tagesschrift.variable}`}>
       <body>
         <Providers>
           <div
