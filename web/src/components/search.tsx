@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useDebounce } from "use-debounce";
 import { getSearchResults } from "@/utils";
 
-const MAX_THRESHOLD = 3;
+const MAX_THRESHOLD = 4;
 
 export default function Search() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -26,6 +26,14 @@ export default function Search() {
         e.preventDefault();
         setSearchTerm("");
         setSelectedIndex(-1);
+        break;
+      case "ArrowDown":
+        e.preventDefault();
+        setSelectedIndex((prev) => (prev >= MAX_THRESHOLD - 1 ? 0 : prev + 1));
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setSelectedIndex((prev) => (prev <= 0 ? MAX_THRESHOLD - 1 : prev - 1));
         break;
       case "Enter":
         if (selectedIndex >= 0) {
@@ -113,7 +121,7 @@ export default function Search() {
               <div
                 className={`
                   cursor-pointer rounded-lg p-3 transition-all duration-200
-                  ${index === selectedIndex ? "bg-amber-600/20" : "hover:bg-amber-600/20"}
+                  ${index === selectedIndex ? "bg-amber-600/20 scale-105" : "hover:bg-amber-600/20 hover:scale-105"}
                   group-hover:[&:not(:hover)]:opacity-30
                   hover:opacity-100
                 `}
