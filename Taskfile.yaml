@@ -1,0 +1,14 @@
+version: "3"
+
+tasks:
+  format-web:
+    internal: true
+    dir: web
+    cmds:
+      - pnpm run format
+    desc: "Formatting /web with prettier"
+
+  format:
+    deps:
+      - format-web
+    desc: "Formatting all the code"
