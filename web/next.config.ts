@@ -20,6 +20,20 @@ const nextConfig: NextConfig = {
   },
   // This is required to support PostHog trailing slash API requests
   skipTrailingSlashRedirect: true,
+  // Add domain configuration
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: 'https://ira.manaspratimbiswas.com',
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

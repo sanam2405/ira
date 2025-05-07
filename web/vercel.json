@@ -1,8 +1,27 @@
 {
   "rewrites": [
     {
+      "source": "/ingest/static/:path*",
+      "destination": "https://us-assets.i.posthog.com/static/:path*"
+    },
+    {
+      "source": "/ingest/:path*",
+      "destination": "https://us.i.posthog.com/:path*"
+    },
+    {
+      "source": "/ingest/decide",
+      "destination": "https://us.i.posthog.com/decide"
+    }
+  ],
+  "headers": [
+    {
       "source": "/(.*)",
-      "destination": "/"
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "https://ira.manaspratimbiswas.com"
+        }
+      ]
     }
   ]
 }
