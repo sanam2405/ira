@@ -12,3 +12,23 @@ tasks:
     deps:
       - format-web
     desc: "Formatting all the code"
+
+  start-web:
+    internal: true
+    dir: web
+    cmds:
+      - pnpm run dev
+    desc: "Starting the web server"
+
+  start-api:
+    internal: true
+    dir: api
+    cmds:
+      - uv run fastapi dev app.py
+    desc: "Starting the API server"
+
+  start:
+    deps:
+      - start-web
+      # - start-api
+    desc: "Starting the web and API servers"

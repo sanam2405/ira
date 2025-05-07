@@ -5,4 +5,6 @@ description = "Ira, one lyric at a time"
 author = "Manas Pratim Biswas <manaspb2405@gmail.com>"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "fastapi[standard]>=0.115.12",
+]
