@@ -58,7 +58,7 @@ export default function RootLayout({
       lang="en"
       className={`${mina.variable} ${tagesschrift.variable} scroll-smooth`}
     >
-      <body>
+      <body className="overflow-x-hidden">
         <Providers>
           <div
             className="fixed inset-0 bg-cover bg-center bg-no-repeat"

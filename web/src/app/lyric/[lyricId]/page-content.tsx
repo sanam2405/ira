@@ -105,7 +105,7 @@ export default function PageContent() {
             <div className="w-full p-8">
               <div className="space-y-8">
                 <div>
-                  <h2 className="text-2xl font-semibold mb-6 bengali">
+                  <h2 className="text-2xl font-semibold mb-6 english">
                     Lyrics
                   </h2>
                   <div className="whitespace-pre-line text-2xl leading-relaxed bengali">
