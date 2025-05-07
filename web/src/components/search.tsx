@@ -2,12 +2,14 @@
 
 import { getSearchResults } from "@/utils";
 import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useDebounce } from "use-debounce";
 
 const MAX_THRESHOLD = 4;
 
 export default function Search() {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -38,11 +40,17 @@ export default function Search() {
       case "Enter":
         if (selectedIndex >= 0) {
           const selectedResult = searchResults[selectedIndex];
-          console.log(selectedResult);
-          // TODO: Navigate to selectedResult
+          router.push(`/lyric/${selectedResult.id}`);
         }
         break;
     }
+  };
+
+  const handleSearchSuggestionClick = (result: {
+    id: string;
+    title: string;
+  }) => {
+    router.push(`/lyric/${result.id}`);
   };
 
   return (
@@ -120,6 +128,7 @@ export default function Search() {
             <div key={index}>
               {index > 0 && <hr className="border-gray-200/50" />}
               <div
+                onClick={() => handleSearchSuggestionClick(result)}
                 className={`
                   cursor-pointer rounded-lg p-3 transition-all duration-200
                   ${index === selectedIndex ? "bg-amber-600/20 scale-105" : "hover:bg-amber-600/20 hover:scale-105"}

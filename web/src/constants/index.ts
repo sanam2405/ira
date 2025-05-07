@@ -1,23 +1,24 @@
 export const SEARCH_RESULTS = [
   {
-    id: "1",
+    id: "226d66cf-1119-4689-b198-a3f0847804f9",
     title: "আমার পরান যাহা চায়",
   },
   {
-    id: "2",
+    id: "bd8c3eba-82bf-46a7-8f18-8a062d46e77c",
     title: "আমার নিশীথরাতের বাদলধারা",
   },
   {
-    id: "3",
+    id: "fa710f3f-bd80-4cfa-89c1-ef6c4e0dad65",
     title: "আমার প্রাণের মানুষ আছে প্রাণে",
   },
   {
-    id: "4",
+    id: "26c97710-7249-4b36-b26f-4e220d85937f",
     title: "আমার হিয়ার মাঝে লুকিয়ে ছিলে",
   },
 ];
 
 export const AMAR_PORANO_JAHA_CHAY = {
+  id: "226d66cf-1119-4689-b198-a3f0847804f9",
   domain: "gitabitan",
   title: "আমার পরান যাহা চায় তুমি তাই, তুমি তাই গো।",
   url: "http://gitabitan.net/top.asp?songid=851",
@@ -45,6 +46,7 @@ export const AMAR_PORANO_JAHA_CHAY = {
 };
 
 export const AMAR_NISHITHO_RAATER = {
+  id: "bd8c3eba-82bf-46a7-8f18-8a062d46e77c",
   domain: "gitabitan",
   title: "আমার নিশীথরাতের বাদলধারা, এসো হে গোপনে",
   url: "http://gitabitan.net/top.asp?songid=348",
@@ -72,7 +74,8 @@ export const AMAR_NISHITHO_RAATER = {
   ],
 };
 
-export const AMAR_PRANER_MANUS = {
+  export const AMAR_PRANER_MANUS = {
+  id: "fa710f3f-bd80-4cfa-89c1-ef6c4e0dad65",
   domain: "gitabitan",
   title: "আমার প্রাণের মানুষ আছে প্রাণে,",
   url: "http://gitabitan.net/top.asp?songid=1269",
@@ -98,6 +101,7 @@ export const AMAR_PRANER_MANUS = {
 };
 
 export const AMAR_HIYAR_MAJHE = {
+  id: "26c97710-7249-4b36-b26f-4e220d85937f",
   domain: "gitabitan",
   title: "আমার হিয়ার মাঝে লুকিয়ে ছিলে দেখতে আমি পাই নি।",
   url: "http://gitabitan.net/top.asp?songid=82",
