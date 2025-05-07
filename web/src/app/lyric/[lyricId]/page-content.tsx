@@ -52,43 +52,68 @@ export default function PageContent() {
     );
   }
 
+  const formatMetadataKey = (key: string) => {
+    return key
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
+
   return (
-    <div className="w-full max-w-2xl mx-auto px-4 py-8">
-      <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 shadow-lg">
-        <h1 className="text-2xl font-bold mb-4">{song.title}</h1>
-
-        {/* Lyrics */}
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold mb-2">Lyrics</h2>
-          <div className="whitespace-pre-line">{song.lyrics}</div>
-        </div>
-
-        {/* Metadata */}
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold mb-2">Details</h2>
-          <div className="space-y-2">
-            {Object.entries(song.metadata).map(([key, value]) => (
-              <div key={key} className="flex">
-                <span className="font-medium w-1/3">{key}:</span>
-                <span className="w-2/3">{value}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Citations */}
-        {song.citations && song.citations.length > 0 && (
+    <div className="grid grid-cols-3 w-full">
+      {/* Left Column - Metadata and Citations */}
+      <div className="col-span-1 p-8">
+        <h1 className="text-3xl font-bold mb-8 bengali">{song.title}</h1>
+        <div className="space-y-10">
+          {/* Metadata */}
           <div>
-            <h2 className="text-lg font-semibold mb-2">Citations</h2>
+            <h2 className="text-2xl font-semibold mb-6 english">Details</h2>
             <div className="space-y-4">
-              {song.citations.map((citation, index) => (
-                <div key={index} className="text-sm italic">
-                  {citation}
+              {Object.entries(song.metadata).map(([key, value]) => (
+                <div key={key} className="flex flex-col space-y-1">
+                  <span className="font-medium text-neutral-700 text-lg english">
+                    {formatMetadataKey(key)}
+                  </span>
+                  <span className="text-neutral-900 text-xl bengali">
+                    {value}
+                  </span>
                 </div>
               ))}
             </div>
           </div>
-        )}
+
+          {/* Citations */}
+          {song.citations && song.citations.length > 0 && (
+            <div>
+              <h2 className="text-2xl font-semibold mb-6 english">Citations</h2>
+              <div className="space-y-4">
+                {song.citations.map((citation, index) => (
+                  <div
+                    key={index}
+                    className="text-lg italic text-neutral-700 bengali"
+                  >
+                    {citation}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Middle Column - Empty for background image */}
+      <div className="col-span-1" />
+
+      {/* Right Column - Lyrics */}
+      <div className="col-span-1 p-8">
+        <div className="space-y-8">
+          <div>
+            <h2 className="text-2xl font-semibold mb-6 bengali">Lyrics</h2>
+            <div className="whitespace-pre-line text-2xl leading-relaxed bengali">
+              {song.lyrics}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

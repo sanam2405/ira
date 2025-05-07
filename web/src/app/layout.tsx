@@ -57,12 +57,13 @@ export default function RootLayout({
       <body>
         <Providers>
           <div
-            className="flex flex-col min-h-screen items-center bg-cover bg-center bg-no-repeat bg-fixed"
+            className="fixed inset-0 bg-cover bg-center bg-no-repeat"
             style={{
               backgroundImage: "url(/cover.jpg)",
               backgroundPosition: "center 0",
             }}
-          >
+          />
+          <div className="relative min-h-screen flex flex-col items-center">
             <div className="flex-1 flex flex-col items-center justify-end w-full">
               {children}
             </div>
