@@ -1,5 +1,6 @@
 "use client";
 
+import { useScreenSize } from "@/hooks";
 import { getSongDetails } from "@/utils";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
@@ -7,6 +8,7 @@ import { useParams } from "next/navigation";
 export default function PageContent() {
   const params = useParams();
   const lyricId = params.lyricId as string;
+  const screenSize = useScreenSize();
 
   const { data: song, isLoading } = useQuery({
     queryKey: ["song", lyricId],
@@ -59,6 +61,79 @@ export default function PageContent() {
       .join(" ");
   };
 
+  const isMobile = screenSize === "mobile";
+
+  if (isMobile) {
+    return (
+      <div className="w-full backdrop-blur-md bg-white/30 rounded-lg">
+        <div className="flex flex-col w-full">
+          {/* Title Section */}
+          <div className="w-full p-8">
+            <h1 className="text-3xl font-bold bengali">{song.title}</h1>
+          </div>
+
+          <hr className="w-1/2 mx-auto border-amber-900 animate-pulse" />
+
+          {/* Lyrics Section */}
+          <div className="w-full p-8">
+            <div className="space-y-8">
+              <div>
+                <h2 className="text-2xl font-semibold mb-6 bengali">Lyrics</h2>
+                <div className="whitespace-pre-line text-2xl leading-relaxed bengali">
+                  {song.lyrics}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <hr className="w-1/2 mx-auto border-amber-900 animate-pulse" />
+
+          {/* Details Section */}
+          <div className="w-full p-8">
+            <div className="space-y-10">
+              {/* Metadata */}
+              <div>
+                <h2 className="text-2xl font-semibold mb-6 english">Details</h2>
+                <div className="space-y-4">
+                  {Object.entries(song.metadata).map(([key, value]) => (
+                    <div key={key} className="flex flex-col space-y-1">
+                      <span className="font-medium text-neutral-700 text-lg english">
+                        {formatMetadataKey(key)}
+                      </span>
+                      <span className="text-neutral-900 text-xl bengali">
+                        {value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Citations */}
+              {song.citations && song.citations.length > 0 && (
+                <div>
+                  <h2 className="text-2xl font-semibold mb-6 english">
+                    Citations
+                  </h2>
+                  <div className="space-y-4">
+                    {song.citations.map((citation, index) => (
+                      <div
+                        key={index}
+                        className="text-lg italic text-neutral-700 bengali"
+                      >
+                        {citation}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Desktop layout
   return (
     <div className="grid grid-cols-3 w-full">
       {/* Left Column - Metadata and Citations */}
