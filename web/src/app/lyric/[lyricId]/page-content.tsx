@@ -95,7 +95,7 @@ export default function PageContent() {
         <div className="w-full backdrop-blur-md bg-white/30 rounded-lg">
           <div className="flex flex-col w-full">
             {/* Title Section */}
-            <div className="w-full p-8 my-3">
+            <div className="w-full p-8 my-4">
               <h1 className="text-3xl font-bold bengali">{song.title}</h1>
             </div>
 

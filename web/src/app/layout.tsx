@@ -67,7 +67,7 @@ export default function RootLayout({
             <div className="flex-1 flex flex-col items-center justify-end w-full">
               {children}
             </div>
-            <footer className="w-full text-center text-md pb-2">
+            <footer className="w-full text-center text-md pb-2 md:bg-transparent md:backdrop-blur-none backdrop-blur-md bg-white/30">
               <p className="english">Ira, one lyric at a time</p>
             </footer>
           </div>
