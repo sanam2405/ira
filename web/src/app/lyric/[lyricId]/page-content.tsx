@@ -67,7 +67,7 @@ export default function PageContent() {
   const HomeButton = () => (
     <Link
       href="/"
-      className={`fixed top-2 right-2 z-50 w-10 h-10 flex items-center justify-center hover:scale-110 transition-all duration-300 ${
+      className={`fixed top-2 right-2 z-50 w-10 h-10 flex items-center justify-center hover:scale-110 transition-all duration-300 focus:outline-none ${
         isMobile ? "top-1 right-1" : "top-4 right-4"
       }`}
     >
