@@ -1,3 +1,4 @@
+import Footer from "@/components/footer";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
@@ -53,7 +54,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${mina.variable} ${tagesschrift.variable}`}>
+    <html
+      lang="en"
+      className={`${mina.variable} ${tagesschrift.variable} scroll-smooth`}
+    >
       <body>
         <Providers>
           <div
@@ -67,9 +71,7 @@ export default function RootLayout({
             <div className="flex-1 flex flex-col items-center justify-end w-full">
               {children}
             </div>
-            <footer className="w-full text-center text-md pb-2 md:bg-transparent md:backdrop-blur-none backdrop-blur-md bg-white/30">
-              <p className="english">Ira, one lyric at a time</p>
-            </footer>
+            <Footer />
           </div>
         </Providers>
       </body>

@@ -92,7 +92,7 @@ export default function PageContent() {
     return (
       <>
         <HomeButton />
-        <div className="w-full backdrop-blur-md bg-white/30 rounded-lg">
+        <div className="w-full backdrop-blur-sm bg-white/40 sticky top-0">
           <div className="flex flex-col w-full">
             {/* Title Section */}
             <div className="w-full p-8 my-4">
