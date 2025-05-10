@@ -60,13 +60,6 @@ export default function RootLayout({
     >
       <body className="overflow-x-hidden">
         <Providers>
-          <div
-            className="fixed inset-0 bg-cover bg-center bg-no-repeat"
-            style={{
-              backgroundImage: "url(/cover.jpg)",
-              backgroundPosition: "center 0",
-            }}
-          />
           <div className="relative min-h-screen flex flex-col items-center">
             <div className="flex-1 flex flex-col items-center justify-end w-full">
               {children}

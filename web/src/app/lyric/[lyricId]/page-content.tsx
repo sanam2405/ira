@@ -67,8 +67,8 @@ export default function PageContent() {
   const HomeButton = () => (
     <Link
       href="/"
-      className={`fixed top-2 right-2 z-50 w-10 h-10 flex items-center justify-center hover:scale-110 transition-all duration-300 focus:outline-none ${
-        isMobile ? "top-1 right-1" : "top-4 right-4"
+      className={`fixed z-50 w-10 h-10 flex items-center justify-center rounded-full bg-white/70 hover:bg-white shadow-md backdrop-blur-md hover:scale-110 transition-all duration-300 focus:outline-none ${
+        isMobile ? "top-2 right-2" : "top-4 right-4"
       }`}
     >
       <svg
@@ -92,7 +92,7 @@ export default function PageContent() {
     return (
       <>
         <HomeButton />
-        <div className="w-full backdrop-blur-sm bg-white/40 sticky top-0">
+        <div className="w-full backdrop-blur-sm bg-white/25 sticky top-0 transition-all duration-300">
           <div className="flex flex-col w-full">
             {/* Title Section */}
             <div className="w-full p-8 my-4">

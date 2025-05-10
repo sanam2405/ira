@@ -13,7 +13,7 @@ export default function Footer() {
     <footer
       className={`w-full text-center text-md pb-2 ${
         isLyricRoute && isMobile
-          ? "backdrop-blur-sm bg-white/40"
+          ? "w-full backdrop-blur-sm bg-white/25 sticky top-0 transition-all duration-300"
           : "md:bg-transparent md:backdrop-blur-none"
       }`}
     >
