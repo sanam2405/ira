@@ -18,6 +18,8 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <div
           className={`fixed inset-0 bg-cover bg-center bg-no-repeat ${
+            isMobile ? "h-[100dvh]" : ""
+          } ${
             isLyricRoute && isMobile
               ? "blur-sm transition-all duration-300"
               : ""
