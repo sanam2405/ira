@@ -1,6 +1,6 @@
 """
 
-This script is used to transliterate each of the fields of the song (JSON) 
+This script is used to transliterate each of the fields of the song (JSON)
 from the original language (Bangla) to English.
 
 

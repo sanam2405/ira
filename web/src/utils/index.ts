@@ -1,9 +1,9 @@
-import { SEARCH_RESULTS } from "@/constants";
 import {
-  AMAR_PORANO_JAHA_CHAY,
-  AMAR_NISHITHO_RAATER,
-  AMAR_PRANER_MANUS,
   AMAR_HIYAR_MAJHE,
+  AMAR_NISHITHO_RAATER,
+  AMAR_PORANO_JAHA_CHAY,
+  AMAR_PRANER_MANUS,
+  SEARCH_RESULTS,
 } from "@/constants";
 
 interface ISearchResult {

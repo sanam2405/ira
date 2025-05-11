@@ -24,11 +24,11 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: '/:path*',
+        source: "/:path*",
         headers: [
           {
-            key: 'Access-Control-Allow-Origin',
-            value: 'https://ira.manaspratimbiswas.com',
+            key: "Access-Control-Allow-Origin",
+            value: "https://ira.manaspratimbiswas.com",
           },
         ],
       },

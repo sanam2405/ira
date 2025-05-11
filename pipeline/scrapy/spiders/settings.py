@@ -3,9 +3,7 @@ import warnings
 from spiders.extensions import PydanticAdapter
 from itemadapter.adapter import ItemAdapter
 
-ItemAdapter.ADAPTER_CLASSES.appendleft(
-    PydanticAdapter
-)  # pyright: ignore[reportAttributeAccessIssue]
+ItemAdapter.ADAPTER_CLASSES.appendleft(PydanticAdapter)  # pyright: ignore[reportAttributeAccessIssue]
 
 logging.getLogger("httpx").setLevel(logging.WARNING)
 

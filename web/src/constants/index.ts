@@ -74,7 +74,7 @@ export const AMAR_NISHITHO_RAATER = {
   ],
 };
 
-  export const AMAR_PRANER_MANUS = {
+export const AMAR_PRANER_MANUS = {
   id: "fa710f3f-bd80-4cfa-89c1-ef6c4e0dad65",
   domain: "gitabitan",
   title: "আমার প্রাণের মানুষ আছে প্রাণে,",

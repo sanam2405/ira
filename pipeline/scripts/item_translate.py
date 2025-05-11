@@ -1,6 +1,6 @@
 """
 
-This script is used to translate each of the fields of the song (JSON) 
+This script is used to translate each of the fields of the song (JSON)
 from original language (Bangla) to English.
 
 
