@@ -1,10 +1,11 @@
 import logging
-import structlog
-
 from typing import Any, Iterator, override
-from scrapy import logformatter
-from pydantic import BaseModel
+
+import structlog
 from itemadapter.adapter import AdapterInterface
+from pydantic import BaseModel
+
+from scrapy import logformatter
 
 log = structlog.stdlib.get_logger()
 

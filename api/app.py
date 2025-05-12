@@ -1,5 +1,6 @@
-from fastapi import FastAPI
 from typing import Literal
+
+from fastapi import FastAPI
 
 app = FastAPI()
 

@@ -1,9 +1,10 @@
 import json
 from typing import List, Literal, Optional
-from pydantic import BaseModel, RootModel
-import tiktoken
-from transformers import AutoTokenizer
+
 import structlog
+import tiktoken
+from pydantic import BaseModel, RootModel
+from transformers import AutoTokenizer
 
 
 class ItemTokenCount(RootModel[dict[str, int]]):

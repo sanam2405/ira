@@ -12,13 +12,15 @@ tasks:
     internal: true
     dir: api
     cmds:
-      - uv run ruff format 
+      - uv run ruff check --fix --select I
+      - uv run ruff format
     desc: "Formatting /api with ruff"
 
   format-pipeline:
     internal: true
     dir: pipeline
     cmds:
+      - uv run ruff check --fix --select I
       - uv run ruff format
     desc: "Formatting /pipeline with ruff"
 

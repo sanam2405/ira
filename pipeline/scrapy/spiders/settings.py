@@ -1,7 +1,8 @@
 import logging
 import warnings
-from spiders.extensions import PydanticAdapter
+
 from itemadapter.adapter import ItemAdapter
+from spiders.extensions import PydanticAdapter
 
 ItemAdapter.ADAPTER_CLASSES.appendleft(PydanticAdapter)  # pyright: ignore[reportAttributeAccessIssue]
 

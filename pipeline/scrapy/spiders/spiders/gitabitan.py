@@ -1,12 +1,15 @@
-import scrapy
+import re
+from typing import override
+
 import structlog
+from lxml import etree, html
+from pydantic import BaseModel, computed_field
+
+import scrapy
 from scrapy import Request
 from scrapy.http import TextResponse
-from typing import override
-from pydantic import BaseModel, computed_field
+
 from .schema import SpiderDomain
-from lxml import etree, html
-import re
 
 
 class GitabitanItem(BaseModel):
