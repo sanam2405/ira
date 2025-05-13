@@ -1,6 +1,7 @@
 import re
 from typing import override
 
+import ftfy
 import structlog
 from lxml import etree, html
 from pydantic import BaseModel, computed_field
@@ -61,6 +62,8 @@ class GitabitanSpider(scrapy.Spider):
         # Convert to string if not already
         if not isinstance(text, str):
             text = str(text)
+        # Fix broken Unicode characters
+        text = ftfy.fix_text(text)
         # Replace non-breaking spaces, tabs, carriage returns, and form feeds with a space
         text = re.sub(r"[\xa0\t\r\f]", " ", text)
         # Replace multiple spaces (including those created by above) with a single space
