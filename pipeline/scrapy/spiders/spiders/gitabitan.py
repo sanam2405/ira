@@ -1,6 +1,7 @@
 import re
 from typing import override
 
+import bleach
 import ftfy
 import structlog
 from lxml import etree, html
@@ -220,23 +221,26 @@ class GitabitanSpider(scrapy.Spider):
         for elem in tree.iterchildren():
             if elem.tag == "hr":
                 if current:
-                    citation_html = "".join(
+                    citation_text_raw_html = "".join(
                         [html.tostring(e, encoding="unicode") for e in current]
                     )
+                    cleaned_html = bleach.clean(
+                        citation_text_raw_html, tags=[], strip=True
+                    )
                     citation_text = html.fromstring(
-                        f"<div>{citation_html}</div>"
+                        f"<div>{cleaned_html}</div>"
                     ).text_content()
                     citations.append(citation_text)
                     current = []
+
             else:
                 current.append(elem)
         if current:
-            citation_html = "".join(
+            citation_text_raw_html = "".join(
                 [html.tostring(e, encoding="unicode") for e in current]
             )
-            citation_text = html.fromstring(
-                f"<div>{citation_html}</div>"
-            ).text_content()
+            cleaned_html = bleach.clean(citation_text_raw_html, tags=[], strip=True)
+            citation_text = html.fromstring(f"<div>{cleaned_html}</div>").text_content()
             citations.append(citation_text)
         cleaned_citations = [self.clean_text(c) for c in citations if c.strip()]
         return cleaned_citations
