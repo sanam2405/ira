@@ -42,5 +42,14 @@ class Settings(BaseSettings):
     chunk_target_tokens: int = 1200  # well under embedding_max_tokens, leaves headroom
     chunk_overlap_tokens: int = 100
 
+    # --- search (hybrid ranking) ---
+    search_alpha: float = 1.0  # weight on semantic similarity
+    search_beta: float = (
+        0.3  # weight on soft metadata-filter matches (re-rank, not exclude)
+    )
+    search_overfetch: int = (
+        10  # chunk hits per requested song (multi-vector aggregation)
+    )
+
 
 settings = Settings()

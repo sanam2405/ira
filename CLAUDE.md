@@ -23,7 +23,7 @@ web app, orchestrated by [`go-task`](https://taskfile.dev) at the root:
 | ----------- | ---------- | ---------------------------- | ----------------------------------------------------------- |
 | `core/`     | `core`     | Python 3.12, `uv`            | Shared search brain: domain, ports, adapters, chunking, config. No Scrapy/FastAPI. |
 | `pipeline/` | `pipeline` | Python 3.12, `uv`, Scrapy    | Offline ETL: scrape → translate/transliterate → embed → index. Depends on `core`. |
-| `api/`      | `api`      | Python 3.12, `uv`, FastAPI   | Online search API over the indexed data. Depends on `core`. (still a `/health` stub) |
+| `api/`      | `api`      | Python 3.12, `uv`, FastAPI   | Online search API (`/search`, `/songs/{id}`, `/health`) — thin shell over `core`'s SearchService. |
 | `web/`      | —          | Next.js 15, React 19, `pnpm` | Frontend (search box, song detail). UI is intentionally rough for now |
 | `design/`   | —          | —                            | Logos, mockups                                              |
 
@@ -38,7 +38,7 @@ The root is a virtual workspace, so `uv` commands work from the root or any memb
 
 ```bash
 task format          # format web (prettier) + core/api/pipeline (ruff)
-task start           # start web dev server (api start is commented out)
+task start           # start web + api dev servers
 
 uv sync                                      # set up the shared venv (run once / after dep changes)
 uv run python -m pipeline.cli all            # ingest → translate → embed → index
@@ -99,9 +99,9 @@ directly from core search/pipeline logic.
 | `DocumentStore`       | persist song docs + translations + metadata     | **local files (per-song json)** → Postgres, object storage |
 | `SearchBackend`       | index + retrieve (vector, lexical, filters)     | **local (numpy + in-mem lexical)** → Typesense, Turbopuffer |
 
-Ports and adapters all live in **`core`**. A `SearchService` (in `api`, to be built) composes
-`EmbeddingProvider` (query-time) + `SearchBackend` and owns **hybrid ranking with soft filters**
-(see below). It depends on the ports, never the adapters.
+Ports and adapters all live in **`core`**. `core.search.SearchService` composes `DocumentStore`
++ `EmbeddingProvider` (query-time) + `SearchBackend` and owns **hybrid ranking with soft filters**
+(see below); `api` is just an HTTP shell over it. It depends on the ports, never the adapters.
 
 ### Key design decisions (rationale lives in `MUSE.md`)
 
@@ -139,12 +139,17 @@ core/core/
   ports/           the four ABCs (DocumentStore, EmbeddingProvider, TranslationProvider, SearchBackend)
   adapters/        concrete impls: document_store/, embedding/, translation/, search_backend/
                    each has a real adapter (gemini/local) AND a fake for offline runs
+  search/          SearchService + view models (SearchResult, SongView) — hybrid ranking
   chunking.py      token-aware splitter (keeps inputs under the 2,048-token cap)
+  factory.py       build_embedding_provider / build_translation_provider (Gemini vs fake)
 
 pipeline/pipeline/
   stages/          ingest → translate → embed → index (depend only on core's ports)
   cli.py           composition root — the ONLY place concrete adapters are chosen
   tokenizer.py     TokenCounter cost/token estimator (planning tool)
+
+api/
+  app.py           FastAPI: /search, /songs/{id}, /health (composition root for the read side)
 ```
 
 Stages are idempotent/resumable: each keys by stable song UUID and skips work already done

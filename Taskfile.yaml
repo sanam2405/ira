@@ -57,5 +57,5 @@ tasks:
   start:
     deps:
       - start-web
-      # - start-api
+      - start-api
     desc: "Starting the web and API servers"
