@@ -16,32 +16,40 @@ swappable design** over shipping speed — over-engineering toward modularity is
 
 ## Monorepo layout
 
-Three independent projects, orchestrated by [`go-task`](https://taskfile.dev) at the root:
+A **`uv` workspace** (one shared `.venv` + one root `uv.lock`) of three Python members plus the
+web app, orchestrated by [`go-task`](https://taskfile.dev) at the root:
 
-| Dir         | Stack                          | Role                                                        |
-| ----------- | ------------------------------ | ----------------------------------------------------------- |
-| `pipeline/` | Python 3.12, `uv`, Scrapy      | Offline ETL: scrape → translate/transliterate → embed → index |
-| `api/`      | Python 3.12, `uv`, FastAPI     | Online search API over the indexed data                     |
-| `web/`      | Next.js 15, React 19, `pnpm`   | Frontend (search box, song detail). UI is intentionally rough for now |
-| `design/`   | —                              | Logos, mockups                                              |
+| Dir         | Package    | Stack                        | Role                                                        |
+| ----------- | ---------- | ---------------------------- | ----------------------------------------------------------- |
+| `core/`     | `core`     | Python 3.12, `uv`            | Shared search brain: domain, ports, adapters, chunking, config. No Scrapy/FastAPI. |
+| `pipeline/` | `pipeline` | Python 3.12, `uv`, Scrapy    | Offline ETL: scrape → translate/transliterate → embed → index. Depends on `core`. |
+| `api/`      | `api`      | Python 3.12, `uv`, FastAPI   | Online search API over the indexed data. Depends on `core`. (still a `/health` stub) |
+| `web/`      | —          | Next.js 15, React 19, `pnpm` | Frontend (search box, song detail). UI is intentionally rough for now |
+| `design/`   | —          | —                            | Logos, mockups                                              |
 
-`pipeline/` and `api/` are separate `uv` projects with their own `pyproject.toml`.
+`pipeline` and `api` both depend on `core` as a workspace source (local path, editable) — edit
+`core` and both see it instantly. The package dir is nested inside the project dir (e.g.
+`core/core/`, `pipeline/pipeline/`); the outer dir holds `pyproject.toml`, the inner is what you
+`import`. `api` is a virtual project (run by path, not installed).
 
 ## Commands
 
-Run from the repo root unless noted. Tasks are defined in `Taskfile.yaml`.
+The root is a virtual workspace, so `uv` commands work from the root or any member dir.
 
 ```bash
-task format          # format web (prettier) + api & pipeline (ruff)
+task format          # format web (prettier) + core/api/pipeline (ruff)
 task start           # start web dev server (api start is commented out)
 
-# per-project
-cd web && pnpm dev                       # next dev --turbopack
-cd api && uv run fastapi dev app.py      # FastAPI dev server
-cd pipeline && uv run scrapy crawl gitabitan -O gitabitan.jsonl   # from pipeline/scrapy
+uv sync                                      # set up the shared venv (run once / after dep changes)
+uv run python -m pipeline.cli all            # ingest → translate → embed → index
+uv run python -m pipeline.cli all --fake     # offline, no key (plumbing/smoke test)
+uv run python -m pipeline.cli search "monsoon longing"
 
-# lint / format manually
-uv run ruff check --fix && uv run ruff format    # in api/ or pipeline/
+cd web && pnpm dev                           # next dev --turbopack
+cd api && uv run fastapi dev app.py          # FastAPI dev server
+cd pipeline/scrapy && uv run scrapy crawl gitabitan -O gitabitan.jsonl
+
+uv run ruff check --fix && uv run ruff format # lint/format (from root or a member dir)
 ```
 
 ## Data
@@ -86,20 +94,24 @@ directly from core search/pipeline logic.
 
 | Port                  | Responsibility                                  | Adapters (current → future)                          |
 | --------------------- | ----------------------------------------------- | ---------------------------------------------------- |
-| `EmbeddingProvider`   | text/multimodal → vectors                       | **Gemini `gemini-embedding-2`** → BGE-m3, OpenAI, Cohere |
+| `EmbeddingProvider`   | text → vectors                                  | **Gemini `gemini-embedding-001`** → `gemini-embedding-2` (at GA), BGE-m3, OpenAI |
 | `TranslationProvider` | Bengali → English translation + transliteration | **Gemini** → Sarvam, IndicTrans2                     |
-| `DocumentStore`       | persist song docs + translations + metadata     | **local files (parquet/json)** → Postgres, object storage |
+| `DocumentStore`       | persist song docs + translations + metadata     | **local files (per-song json)** → Postgres, object storage |
 | `SearchBackend`       | index + retrieve (vector, lexical, filters)     | **local (numpy + in-mem lexical)** → Typesense, Turbopuffer |
 
-A `SearchService` in `api/` composes `EmbeddingProvider` (query-time) + `SearchBackend` and owns
-**hybrid ranking with soft filters** (see below). It depends on the ports, never the adapters.
+Ports and adapters all live in **`core`**. A `SearchService` (in `api`, to be built) composes
+`EmbeddingProvider` (query-time) + `SearchBackend` and owns **hybrid ranking with soft filters**
+(see below). It depends on the ports, never the adapters.
 
 ### Key design decisions (rationale lives in `MUSE.md`)
 
-- **Embedding model: `gemini-embedding-2` (multimodal v2).** Chosen for top multilingual MTEB and
-  8,192-token input. Truncate via Matryoshka to **768 dims** (the recommended sweet spot). It is
-  preview — its vector space may change at GA, which means a full re-embed. That risk is accepted
-  precisely because the `EmbeddingProvider` port makes re-embedding a contained operation.
+- **Embedding model: `gemini-embedding-001` (GA, stable) for v1.** Chosen over the preview v2 to
+  sit on a stable vector space (no forced re-embed from preview→GA churn). Truncate via Matryoshka
+  to **768 dims** (recommended sweet spot). Its **2,048-token input cap** makes multi-vector +
+  citation chunking *mandatory* — per-song `citations` average ~3.7k tokens. **Planned upgrade:**
+  re-embed the whole corpus with `gemini-embedding-2` (multimodal, 8,192-token, top MTEB) once *it*
+  reaches GA. The `EmbeddingProvider` port makes that a deliberate, contained operation — not a
+  forced migration.
 - **Multi-vector per song.** Do **not** embed a whole song as one vector — `context` + `citations`
   alone routinely exceed even large input limits, and field-level hits carry different intent.
   Embed `title`, `lyrics`, `context`, and chunked `citations` as separate vectors that link back
@@ -118,15 +130,38 @@ A `SearchService` in `api/` composes `EmbeddingProvider` (query-time) + `SearchB
   change, not a rewrite. Don't add Postgres/object-storage/vector-DB infra until data or traffic
   forces it.
 
-### Pipeline stages (offline, idempotent, resumable)
+### Package layout
 
-`ingest` (jsonl → typed docs) → `translate` (+ transliterate) → `embed` (multi-vector) →
-`index` (write to `SearchBackend`). Each stage reads/writes through `DocumentStore` and keys
-everything by a stable song id (UUID).
+```
+core/core/
+  config.py        typed settings (env vars like GEMINI_API_KEY, reads workspace-root .env)
+  domain/          vendor-neutral models + enums (Song, SongTranslation, Embedding, ...)
+  ports/           the four ABCs (DocumentStore, EmbeddingProvider, TranslationProvider, SearchBackend)
+  adapters/        concrete impls: document_store/, embedding/, translation/, search_backend/
+                   each has a real adapter (gemini/local) AND a fake for offline runs
+  chunking.py      token-aware splitter (keeps inputs under the 2,048-token cap)
 
-Existing `pipeline/scripts/item_*.py` files are docstring stubs describing these stages — flesh
-them out behind the ports rather than scripting vendor calls inline. `utils/tokenizer.py`
-(`TokenCounter`) is a working cost/token estimator used during planning.
+pipeline/pipeline/
+  stages/          ingest → translate → embed → index (depend only on core's ports)
+  cli.py           composition root — the ONLY place concrete adapters are chosen
+  tokenizer.py     TokenCounter cost/token estimator (planning tool)
+```
+
+Stages are idempotent/resumable: each keys by stable song UUID and skips work already done
+(`DocumentStore.exists`). Artifacts land in **`data/` at the workspace root** (gitignored, shared
+between pipeline writer and api reader): `songs/`, `translations/`, `embeddings/` collections + an
+index snapshot under `index/`.
+
+```bash
+# uses Gemini when GEMINI_API_KEY is set (in workspace-root .env), else fake providers
+uv run python -m pipeline.cli all              # ingest → translate → embed → index
+uv run python -m pipeline.cli all --fake       # offline, no key (plumbing/smoke test)
+uv run python -m pipeline.cli search "monsoon longing"
+```
+
+When adding a provider/store: implement the port (in `core/core/ports`), add the adapter under
+`core/core/adapters/`, wire it in `pipeline/pipeline/cli.py`. Never call a vendor SDK from
+`stages/` or `domain/`.
 
 ## Conventions
 

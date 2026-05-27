@@ -11,8 +11,9 @@
 
 ### What's inside
 
-A monorepo, orchestrated with [`go-task`](https://taskfile.dev):
+A `uv` workspace + a web app, orchestrated with [`go-task`](https://taskfile.dev):
 
+- **`core/`** — shared search brain: domain, ports, adapters, embeddings
 - **`pipeline/`** — Python/Scrapy ETL: scrape → translate & transliterate → embed → index
 - **`api/`** — FastAPI search service
 - **`web/`** — Next.js frontend

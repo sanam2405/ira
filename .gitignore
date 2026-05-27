@@ -3,3 +3,10 @@
 !vercel.json
 *.DS_Store
 MUSE.md
+
+# python workspace
+.venv/
+__pycache__/
+.ruff_cache/
+.env
+data/

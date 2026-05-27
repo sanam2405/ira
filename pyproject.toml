@@ -1,0 +1,10 @@
+# Virtual workspace root — ties the Python members together so they share one venv and
+# one lockfile. `web/` is a separate (pnpm) ecosystem and is not a member.
+[tool.uv.workspace]
+members = ["core", "pipeline", "api"]
+
+[tool.uv.sources]
+core = { workspace = true }
+
+[dependency-groups]
+dev = ["ruff>=0.11.9"]

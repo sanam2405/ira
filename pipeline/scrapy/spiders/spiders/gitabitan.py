@@ -9,7 +9,6 @@ from pydantic import BaseModel, computed_field
 
 import scrapy
 from scrapy import Request
-from scrapy.http import TextResponse
 
 from .schema import SpiderDomain
 

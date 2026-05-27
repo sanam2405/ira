@@ -8,6 +8,14 @@ tasks:
       - pnpm run format
     desc: "Formatting /web with prettier"
 
+  format-core:
+    internal: true
+    dir: core
+    cmds:
+      - uv run ruff check --fix --select I
+      - uv run ruff format
+    desc: "Formatting /core with ruff"
+
   format-api:
     internal: true
     dir: api
@@ -27,6 +35,7 @@ tasks:
   format:
     deps:
       - format-web
+      - format-core
       - format-api
       - format-pipeline
     desc: "Formatting all the code"
