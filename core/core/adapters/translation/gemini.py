@@ -1,23 +1,25 @@
-"""Gemini TranslationProvider — translate + transliterate Bengali via a chat model.
+"""Gemini TranslationProvider — translate + transliterate in one structured call.
 
-A single model handles both; prompts pin it to "output only the result" so we can store
-the response verbatim. Temperature 0 for stable, repeatable output.
+One `generate_content` per text returns BOTH forms via a JSON response schema (half the
+calls vs. doing them separately), and texts are rendered concurrently on a thread pool.
+Temperature 0 for stable output. For the one-time full corpus run prefer the Batch API
+variant (`GeminiBatchTranslationProvider`) — 50% cheaper.
 """
 
 from google import genai
 from google.genai import types
 from tenacity import retry, stop_after_attempt, wait_exponential
 
+from core.concurrency import parallel_map
+from core.config import settings
+from core.domain import Rendering
 from core.ports import TranslationProvider
 
-_TRANSLATE_PROMPT = (
-    "Translate the following Bengali text into natural English. "
-    "Preserve line breaks. Output only the translation, with no preamble or notes.\n\n{text}"
-)
-_TRANSLITERATE_PROMPT = (
-    "Transliterate the following Bengali text into Latin-script phonetic romanization "
-    "(how it sounds, not its meaning). Preserve line breaks. Output only the "
-    "transliteration, with no preamble or notes.\n\n{text}"
+_PROMPT = (
+    "You are translating Rabindra Sangeet (Bengali). For the text below, return JSON with:\n"
+    "- translation: natural English meaning\n"
+    "- transliteration: Latin-script phonetic romanization (how it sounds)\n"
+    "Preserve line breaks within each value.\n\nText:\n{text}"
 )
 
 
@@ -33,20 +35,29 @@ class GeminiTranslationProvider(TranslationProvider):
         return self._model
 
     @retry(stop=stop_after_attempt(5), wait=wait_exponential(min=1, max=30))
-    def _generate(self, prompt: str) -> str:
+    def _render_one(self, text: str) -> Rendering:
+        if not text.strip():
+            return Rendering(translation="", transliteration="")
         resp = self._client.models.generate_content(
             model=self._model,
-            contents=prompt,
-            config=types.GenerateContentConfig(temperature=0.0),
+            contents=_PROMPT.format(text=text),
+            config=types.GenerateContentConfig(
+                temperature=0.0,
+                response_mime_type="application/json",
+                response_schema=Rendering,
+            ),
         )
-        return (resp.text or "").strip()
+        parsed = resp.parsed
+        return (
+            parsed
+            if isinstance(parsed, Rendering)
+            else Rendering(translation="", transliteration="")
+        )
 
-    def translate(self, text: str) -> str:
-        if not text.strip():
-            return ""
-        return self._generate(_TRANSLATE_PROMPT.format(text=text))
-
-    def transliterate(self, text: str) -> str:
-        if not text.strip():
-            return ""
-        return self._generate(_TRANSLITERATE_PROMPT.format(text=text))
+    def render(self, texts: list[str]) -> list[Rendering]:
+        return parallel_map(
+            self._render_one,
+            texts,
+            max_workers=settings.translation_concurrency,
+            desc="render",
+        )

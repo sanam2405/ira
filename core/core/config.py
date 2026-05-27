@@ -51,5 +51,15 @@ class Settings(BaseSettings):
         10  # chunk hits per requested song (multi-vector aggregation)
     )
 
+    # --- concurrency (Gemini calls are blocking HTTP -> threads help) ---
+    embedding_concurrency: int = 8  # parallel embed batches
+    translation_concurrency: int = 8  # parallel render calls
+
+    # --- batch api (50% cheaper, async; for the one-time full run) ---
+    use_batch_api: bool = (
+        False  # if true, use Gemini Batch API instead of concurrent calls
+    )
+    batch_poll_seconds: int = 30  # how often to poll a batch job for completion
+
 
 settings = Settings()

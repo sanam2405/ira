@@ -65,6 +65,13 @@ class Song(BaseModel):
         )
 
 
+class Rendering(BaseModel):
+    """English rendering of one Bengali text — both forms from a single model call."""
+
+    translation: str  # meaning in English
+    transliteration: str  # Latin-script phonetic
+
+
 class SongTranslation(BaseModel):
     """English translation + transliteration of a song's free-text fields.
 

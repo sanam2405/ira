@@ -7,7 +7,11 @@ Falls back to fake providers when no API key is set (offline/dev), or when force
 
 import structlog
 
-from core.adapters.embedding import FakeEmbeddingProvider, GeminiEmbeddingProvider
+from core.adapters.embedding import (
+    FakeEmbeddingProvider,
+    GeminiBatchEmbeddingProvider,
+    GeminiEmbeddingProvider,
+)
 from core.adapters.translation import (
     FakeTranslationProvider,
     GeminiTranslationProvider,
@@ -23,7 +27,12 @@ def build_embedding_provider(fake: bool = False) -> EmbeddingProvider:
         if not fake:
             logger.warning("no GEMINI_API_KEY — using fake embedding provider")
         return FakeEmbeddingProvider(settings.embedding_dimensions)
-    return GeminiEmbeddingProvider(
+    cls = (
+        GeminiBatchEmbeddingProvider
+        if settings.use_batch_api
+        else GeminiEmbeddingProvider
+    )
+    return cls(
         settings.gemini_api_key, settings.embedding_model, settings.embedding_dimensions
     )
 

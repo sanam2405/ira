@@ -1,14 +1,18 @@
 """Gemini EmbeddingProvider — gemini-embedding-001 by default (see config).
 
-Truncates to `dimensions` via Matryoshka. Batches requests and retries transient
-errors. Output is L2-normalized downstream by the SearchBackend (001 does not normalize
-truncated vectors itself).
+Truncates to `dimensions` via Matryoshka. Splits inputs into request-sized batches and
+runs them **concurrently** on a thread pool, retrying transient errors. Output is
+L2-normalized downstream by the SearchBackend (001 does not normalize truncated vectors
+itself). For the one-time full corpus run prefer `GeminiBatchEmbeddingProvider` (50%
+cheaper via the Batch API).
 """
 
 from google import genai
 from google.genai import types
 from tenacity import retry, stop_after_attempt, wait_exponential
 
+from core.concurrency import parallel_map
+from core.config import settings
 from core.domain import TaskType
 from core.ports import EmbeddingProvider
 
@@ -51,7 +55,17 @@ class GeminiEmbeddingProvider(EmbeddingProvider):
         return [list(e.values) for e in resp.embeddings]
 
     def embed(self, texts: list[str], task_type: TaskType) -> list[list[float]]:
+        batches = [
+            texts[i : i + _BATCH_SIZE] for i in range(0, len(texts), _BATCH_SIZE)
+        ]
+        results = parallel_map(
+            lambda b: self._embed_batch(b, task_type),
+            batches,
+            max_workers=settings.embedding_concurrency,
+            log_every=20,
+            desc="embed",
+        )
         out: list[list[float]] = []
-        for start in range(0, len(texts), _BATCH_SIZE):
-            out.extend(self._embed_batch(texts[start : start + _BATCH_SIZE], task_type))
+        for batch_vectors in results:
+            out.extend(batch_vectors)
         return out

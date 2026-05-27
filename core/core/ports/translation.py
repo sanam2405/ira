@@ -1,14 +1,17 @@
 from abc import ABC, abstractmethod
 
+from core.domain import Rendering
+
 
 class TranslationProvider(ABC):
     """Renders Bengali source text into English for non-native readers.
 
-    Two distinct outputs (see CLAUDE.md):
-      - translate:     meaning in English ("enchanted forest")
-      - transliterate: same sounds in Latin script ("mayabon")
+    `render` returns BOTH forms per text in one shot (see CLAUDE.md):
+      - translation:     meaning in English ("enchanted forest")
+      - transliteration: same sounds in Latin script ("mayabon")
 
-    Implementations: Gemini, Sarvam, IndicTrans2, ...
+    Batch-oriented (takes a list) so implementations can parallelize or use a batch job.
+    Implementations: Gemini (concurrent / batch), Sarvam, IndicTrans2, ...
     """
 
     @property
@@ -16,9 +19,5 @@ class TranslationProvider(ABC):
     def model_id(self) -> str: ...
 
     @abstractmethod
-    def translate(self, text: str) -> str:
-        """Bengali -> English meaning."""
-
-    @abstractmethod
-    def transliterate(self, text: str) -> str:
-        """Bengali -> Latin-script phonetic rendering."""
+    def render(self, texts: list[str]) -> list[Rendering]:
+        """Render each text to {translation, transliteration}, in input order."""

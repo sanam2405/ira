@@ -94,14 +94,21 @@ directly from core search/pipeline logic.
 
 | Port                  | Responsibility                                  | Adapters (current → future)                          |
 | --------------------- | ----------------------------------------------- | ---------------------------------------------------- |
-| `EmbeddingProvider`   | text → vectors                                  | **Gemini `gemini-embedding-001`** → `gemini-embedding-2` (at GA), BGE-m3, OpenAI |
-| `TranslationProvider` | Bengali → English translation + transliteration | **Gemini** → Sarvam, IndicTrans2                     |
+| `EmbeddingProvider`   | `embed(texts)` → vectors                        | **Gemini `gemini-embedding-001`** (concurrent) + batch-API variant → `gemini-embedding-2` (at GA), BGE-m3 |
+| `TranslationProvider` | `render(texts)` → {translation, transliteration}| **Gemini** (one structured call per text, concurrent) → Sarvam, IndicTrans2 |
 | `DocumentStore`       | persist song docs + translations + metadata     | **local files (per-song json)** → Postgres, object storage |
 | `SearchBackend`       | index + retrieve (vector, lexical, filters)     | **local (numpy + in-mem lexical)** → Typesense, Turbopuffer |
 
 Ports and adapters all live in **`core`**. `core.search.SearchService` composes `DocumentStore`
 + `EmbeddingProvider` (query-time) + `SearchBackend` and owns **hybrid ranking with soft filters**
 (see below); `api` is just an HTTP shell over it. It depends on the ports, never the adapters.
+
+**Throughput.** Gemini calls are blocking HTTP, so adapters parallelize via the shared
+`core.concurrency.parallel_map` (a thread pool). `TranslationProvider.render` also returns both
+English forms in *one* structured call (halving translation calls). For the one-time full-corpus
+run, set `USE_BATCH_API=true` to route embeddings through the **Gemini Batch API** (50% cheaper,
+async job + polling) via `GeminiBatchEmbeddingProvider`. Concurrency is the low-latency default;
+batch is the cheap bulk path — both behind the same port. `core.factory` picks the implementation.
 
 ### Key design decisions (rationale lives in `MUSE.md`)
 
@@ -141,7 +148,8 @@ core/core/
                    each has a real adapter (gemini/local) AND a fake for offline runs
   search/          SearchService + view models (SearchResult, SongView) — hybrid ranking
   chunking.py      token-aware splitter (keeps inputs under the 2,048-token cap)
-  factory.py       build_embedding_provider / build_translation_provider (Gemini vs fake)
+  concurrency.py   parallel_map — shared thread-pool helper used by adapters/stages
+  factory.py       build_embedding_provider / build_translation_provider (Gemini vs fake; concurrent vs batch)
 
 pipeline/pipeline/
   stages/          ingest → translate → embed → index (depend only on core's ports)
