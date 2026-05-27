@@ -2,8 +2,9 @@
 
 One `generate_content` per text returns BOTH forms via a JSON response schema (half the
 calls vs. doing them separately), and texts are rendered concurrently on a thread pool.
-Temperature 0 for stable output. For the one-time full corpus run prefer the Batch API
-variant (`GeminiBatchTranslationProvider`) — 50% cheaper.
+Temperature 0 for stable output; thinking disabled (`thinking_budget=0`) so we don't pay
+for reasoning tokens on what is a straightforward translate/transliterate task. A Batch
+API variant (50% cheaper) could follow the same pattern as the embedding batch provider.
 """
 
 from google import genai
@@ -45,6 +46,9 @@ class GeminiTranslationProvider(TranslationProvider):
                 temperature=0.0,
                 response_mime_type="application/json",
                 response_schema=Rendering,
+                thinking_config=types.ThinkingConfig(
+                    thinking_budget=settings.translation_thinking_budget
+                ),
             ),
         )
         parsed = resp.parsed
