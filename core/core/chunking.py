@@ -58,3 +58,18 @@ def _overlap_tail(lines: list[str], overlap_tokens: int) -> tuple[list[str], int
         tail.insert(0, line)
         tokens += t
     return tail, tokens
+
+
+def truncate_to_tokens(text: str, max_tokens: int) -> str:
+    """Defensive: trim `text` to at most `max_tokens` cl100k tokens.
+
+    Chunk-stage already targets a smaller budget, so this only fires on edge cases (a
+    chunk that slipped past, or a code path that bypassed chunk_text). Cheap insurance
+    against the embedder rejecting the whole batch for one over-length item.
+    """
+    if not text:
+        return text
+    ids = _ENC.encode(text)
+    if len(ids) <= max_tokens:
+        return text
+    return _ENC.decode(ids[:max_tokens])

@@ -9,8 +9,9 @@ cheaper via the Batch API).
 
 from google import genai
 from google.genai import types
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import retry, stop_after_attempt, wait_exponential_jitter
 
+from core.chunking import truncate_to_tokens
 from core.concurrency import parallel_map
 from core.config import settings
 from core.domain import TaskType
@@ -42,8 +43,14 @@ class GeminiEmbeddingProvider(EmbeddingProvider):
     def dimensions(self) -> int:
         return self._dims
 
-    @retry(stop=stop_after_attempt(5), wait=wait_exponential(min=1, max=30))
+    @retry(
+        stop=stop_after_attempt(5),
+        wait=wait_exponential_jitter(initial=1, max=30, jitter=2),
+    )
     def _embed_batch(self, batch: list[str], task_type: TaskType) -> list[list[float]]:
+        # defense-in-depth: trim each item to the safe-tokens cap before sending, so a
+        # single over-length input can't fail the whole batch.
+        batch = [truncate_to_tokens(t, settings.embedding_safe_tokens) for t in batch]
         resp = self._client.models.embed_content(
             model=self._model,
             contents=batch,

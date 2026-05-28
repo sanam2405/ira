@@ -35,6 +35,9 @@ class Settings(BaseSettings):
     embedding_max_tokens: int = (
         2048  # gemini-embedding-001 input cap -> drives chunking
     )
+    embedding_safe_tokens: int = (
+        1950  # defensive pre-send truncation cap (margin under the model cap)
+    )
 
     # --- translation ---
     translation_model: str = "gemini-2.5-flash"

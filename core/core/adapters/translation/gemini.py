@@ -19,7 +19,7 @@ from functools import cache
 
 from google import genai
 from google.genai import types
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import retry, stop_after_attempt, wait_exponential_jitter
 
 from core.concurrency import parallel_map
 from core.config import settings
@@ -54,7 +54,10 @@ class GeminiTranslationProvider(TranslationProvider):
     def model_id(self) -> str:
         return self._model
 
-    @retry(stop=stop_after_attempt(5), wait=wait_exponential(min=1, max=30))
+    @retry(
+        stop=stop_after_attempt(5),
+        wait=wait_exponential_jitter(initial=1, max=30, jitter=2),
+    )
     def _render_one(self, item: TextSnippet) -> Rendering:
         if not item.text.strip():
             return Rendering(translation="", transliteration="")

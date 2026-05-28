@@ -153,7 +153,7 @@ core/core/
   adapters/        concrete impls: document_store/, embedding/, translation/, search_backend/
                    each has a real adapter (gemini/local) AND a fake for offline runs
   search/          SearchService + view models (SearchResult, SongView) — hybrid ranking
-  chunking.py      token-aware splitter (keeps inputs under the 2,048-token cap)
+  chunking.py      token-aware splitter + `truncate_to_tokens` defensive guard
   concurrency.py   parallel_map — shared thread-pool helper used by adapters/stages
   templates.py     get_jinja_template — load Jinja2 prompts from a `templates/` dir next to the caller
   factory.py       build_embedding_provider / build_translation_provider (Gemini vs fake; concurrent vs batch)

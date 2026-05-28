@@ -18,6 +18,7 @@ from pathlib import Path
 import structlog
 from google import genai
 
+from core.chunking import truncate_to_tokens
 from core.config import settings
 from core.domain import TaskType
 from core.ports import EmbeddingProvider
@@ -63,7 +64,15 @@ class GeminiBatchEmbeddingProvider(EmbeddingProvider):
                 {
                     "key": str(i),
                     "request": {
-                        "content": {"parts": [{"text": text}]},
+                        "content": {
+                            "parts": [
+                                {
+                                    "text": truncate_to_tokens(
+                                        text, settings.embedding_safe_tokens
+                                    )
+                                }
+                            ]
+                        },
                         "output_dimensionality": self._dims,
                         "task_type": _TASK_TYPE[task_type],
                     },
