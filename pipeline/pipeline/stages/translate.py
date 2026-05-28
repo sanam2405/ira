@@ -5,11 +5,13 @@ needs). Citations are left in source form — they are large and frequently alre
 English. Resumable: songs that already have a translation record are skipped.
 
 All pending texts are collected into one `render` call so the provider can parallelize
-(or run a single batch job) across the whole corpus rather than song-by-song.
+(or run a single batch job) across the whole corpus rather than song-by-song. Each text
+carries its `Field` kind so the model can treat a title vs. lyric vs. scholarly context
+appropriately.
 """
 
 import structlog
-from core.domain import Rendering, Song, SongTranslation
+from core.domain import Field, Rendering, Song, SongTranslation, TextSnippet
 from core.ports import DocumentStore, TranslationProvider
 
 logger = structlog.get_logger(__name__).bind(stage="translate")
@@ -27,27 +29,33 @@ def run_translate(
         logger.info("translated", songs=0, note="nothing pending")
         return 0
 
-    # Flatten to (song_id, field, text) so one render pass covers everything.
-    entries: list[tuple[str, str, str]] = []
+    # Flatten to (song_id, kind, snippet) so one render pass covers everything.
+    entries: list[tuple[str, Field, TextSnippet]] = []
     for song in pending:
-        entries.append((song.id, "title", song.title))
-        entries.append((song.id, "lyrics", song.lyrics))
+        entries.append(
+            (song.id, Field.TITLE, TextSnippet(text=song.title, kind=Field.TITLE))
+        )
+        entries.append(
+            (song.id, Field.LYRICS, TextSnippet(text=song.lyrics, kind=Field.LYRICS))
+        )
         context = song.metadata.get("context", "") or ""
         if context:
-            entries.append((song.id, "context", context))
+            entries.append(
+                (song.id, Field.CONTEXT, TextSnippet(text=context, kind=Field.CONTEXT))
+            )
 
     logger.info("rendering", songs=len(pending), texts=len(entries))
-    renderings = translator.render([text for _, _, text in entries])
+    renderings = translator.render([snippet for _, _, snippet in entries])
 
-    by_song: dict[str, dict[str, Rendering]] = {}
-    for (song_id, field, _), rendering in zip(entries, renderings, strict=True):
-        by_song.setdefault(song_id, {})[field] = rendering
+    by_song: dict[str, dict[Field, Rendering]] = {}
+    for (song_id, kind, _), rendering in zip(entries, renderings, strict=True):
+        by_song.setdefault(song_id, {})[kind] = rendering
 
     for song in pending:
         fields = by_song.get(song.id, {})
-        title = fields.get("title")
-        lyrics = fields.get("lyrics")
-        context = fields.get("context")
+        title = fields.get(Field.TITLE)
+        lyrics = fields.get(Field.LYRICS)
+        context = fields.get(Field.CONTEXT)
         store.save(
             "translations",
             song.id,

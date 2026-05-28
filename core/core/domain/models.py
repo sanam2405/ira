@@ -72,6 +72,19 @@ class Rendering(BaseModel):
     transliteration: str  # Latin-script phonetic
 
 
+class TextSnippet(BaseModel):
+    """A text to render plus its `kind` (which part of a song it is).
+
+    The kind reuses `Field` so callers don't invent a parallel enum; in translation
+    contexts only TITLE/LYRICS/CONTEXT are meaningful (citations are not translated).
+    The kind is sent to the model as a per-call hint so it treats e.g. a lyric line
+    differently from scholarly prose.
+    """
+
+    text: str
+    kind: Field
+
+
 class SongTranslation(BaseModel):
     """English translation + transliteration of a song's free-text fields.
 

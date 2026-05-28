@@ -8,6 +8,7 @@ from core.domain.models import (
     SongEmbeddings,
     SongTranslation,
     TaskType,
+    TextSnippet,
     song_id_for,
 )
 
@@ -21,5 +22,6 @@ __all__ = [
     "SongEmbeddings",
     "SongTranslation",
     "TaskType",
+    "TextSnippet",
     "song_id_for",
 ]

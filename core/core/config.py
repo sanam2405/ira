@@ -37,7 +37,9 @@ class Settings(BaseSettings):
 
     # --- translation ---
     translation_model: str = "gemini-2.5-flash"
-    translation_thinking_budget: int = 0  # 0 disables 2.5-flash "thinking" (no billed reasoning tokens)
+    translation_thinking_budget: int = (
+        0  # 0 disables 2.5-flash "thinking" (no billed reasoning tokens)
+    )
 
     # --- chunking ---
     chunk_target_tokens: int = 1200  # well under embedding_max_tokens, leaves headroom

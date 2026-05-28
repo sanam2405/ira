@@ -149,6 +149,7 @@ core/core/
   search/          SearchService + view models (SearchResult, SongView) — hybrid ranking
   chunking.py      token-aware splitter (keeps inputs under the 2,048-token cap)
   concurrency.py   parallel_map — shared thread-pool helper used by adapters/stages
+  templates.py     get_jinja_template — load Jinja2 prompts from a `templates/` dir next to the caller
   factory.py       build_embedding_provider / build_translation_provider (Gemini vs fake; concurrent vs batch)
 
 pipeline/pipeline/

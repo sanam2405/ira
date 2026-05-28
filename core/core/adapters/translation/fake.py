@@ -1,6 +1,6 @@
 """No-op translation for offline runs/tests. Tags text so the flow is observable."""
 
-from core.domain import Rendering
+from core.domain import Rendering, TextSnippet
 from core.ports import TranslationProvider
 
 
@@ -9,10 +9,13 @@ class FakeTranslationProvider(TranslationProvider):
     def model_id(self) -> str:
         return "fake-translation"
 
-    def render(self, texts: list[str]) -> list[Rendering]:
+    def render(self, items: list[TextSnippet]) -> list[Rendering]:
         return [
-            Rendering(translation=f"[en] {t}", transliteration=f"[translit] {t}")
-            if t.strip()
+            Rendering(
+                translation=f"[en|{item.kind.value}] {item.text}",
+                transliteration=f"[translit|{item.kind.value}] {item.text}",
+            )
+            if item.text.strip()
             else Rendering(translation="", transliteration="")
-            for t in texts
+            for item in items
         ]

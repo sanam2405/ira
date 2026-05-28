@@ -5,6 +5,7 @@ description = "ira — shared domain, ports, adapters, and search core"
 requires-python = ">=3.12"
 dependencies = [
     "google-genai>=2.6.0",
+    "jinja2>=3.1.6",
     "numpy>=1.26",
     "pydantic>=2.11.4",
     "pydantic-settings>=2.0",
