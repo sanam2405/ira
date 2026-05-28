@@ -98,6 +98,7 @@ directly from core search/pipeline logic.
 | `TranslationProvider` | `render(texts)` → {translation, transliteration}| **Gemini** (one structured call per text, concurrent) → Sarvam, IndicTrans2 |
 | `DocumentStore`       | persist song docs + translations + metadata     | **local files (per-song json)** → Postgres, object storage |
 | `SearchBackend`       | index + retrieve (vector, lexical, filters)     | **local (numpy + in-mem lexical)** → Typesense, Turbopuffer |
+| `FusionStrategy`      | combine ranked lists into a final order         | **`RRFFusion`** (default, rank-based) ↔ `WeightedSumFusion` (legacy α/β); future cross-encoder / Cohere rerank |
 
 Ports and adapters all live in **`core`**. `core.search.SearchService` composes `DocumentStore`
 + `EmbeddingProvider` (query-time) + `SearchBackend` and owns **hybrid ranking with soft filters**
@@ -130,8 +131,13 @@ batch is the cheap bulk path — both behind the same port. `core.factory` picks
 - **Deferred enrichment.** *Derived* facets (mood, season, theme) are explicitly out of scope for
   now; soft filters use the structured fields already scraped (`raag`, `taal`, `composition_date`,
   `gitabitan_index`, …).
-- **Filters are soft.** They re-rank/boost candidates, they do not hard-exclude. Concretely a
-  score fusion like `final = α·semantic + β·field_matches`, computed in-process at this scale.
+- **Filters are soft, fusion is pluggable.** Hybrid ranking happens via the `FusionStrategy`
+  port. Default is **Reciprocal Rank Fusion** (rank-based, scale-agnostic — robust when
+  cosine scores cluster tightly); `WeightedSumFusion` keeps the legacy `α·semantic +
+  β·field_matches` formula as an explicit fallback. Per-call override via `--fusion` on the
+  CLI and `?fusion=` on the API for A/B during tuning. Filters re-rank/boost candidates and
+  never hard-exclude — non-matching songs are absent from the filter ranked list and so
+  contribute 0 via RRF.
 - **Local-first storage, adapter-gated.** Start with in-memory numpy + local files. Swapping to
   Typesense (lexical typeahead + vector + facets in one engine) or Turbopuffer is an adapter
   change, not a rewrite. Don't add Postgres/object-storage/vector-DB infra until data or traffic

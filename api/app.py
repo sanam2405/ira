@@ -14,7 +14,7 @@ import structlog
 from core.adapters.document_store import LocalDocumentStore
 from core.adapters.search_backend import LocalSearchBackend
 from core.config import settings
-from core.factory import build_embedding_provider
+from core.factory import build_embedding_provider, build_fusion_strategy
 from core.search import SearchResult, SearchService, SongView
 from fastapi import FastAPI, HTTPException, Query
 
@@ -28,7 +28,9 @@ async def lifespan(app: FastAPI):
     backend = LocalSearchBackend(settings.data_dir / "index")
     try:
         backend.load()
-        app.state.search = SearchService(store, backend, build_embedding_provider())
+        app.state.search = SearchService(
+            store, backend, build_embedding_provider(), build_fusion_strategy()
+        )
         logger.info("search ready", model=app.state.search.embedder.model_id)
     except FileNotFoundError:
         app.state.search = None
@@ -56,8 +58,12 @@ def health() -> Literal["IRA"]:
 def search(
     q: str = Query(..., min_length=1, description="search query (English or Bengali)"),
     top_k: int = Query(10, ge=1, le=50),
+    fusion: Literal["rrf", "weighted_sum"] | None = Query(
+        None, description="override the fusion strategy for this call only"
+    ),
 ) -> list[SearchResult]:
-    return _service(app).search(q, top_k=top_k)
+    override = build_fusion_strategy(fusion) if fusion else None
+    return _service(app).search(q, top_k=top_k, fusion=override)
 
 
 @app.get("/songs/{song_id}", description="Full song detail (Bengali + en + translit)")

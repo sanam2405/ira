@@ -16,7 +16,11 @@ import argparse
 from core.adapters.document_store import LocalDocumentStore
 from core.adapters.search_backend import LocalSearchBackend
 from core.config import settings
-from core.factory import build_embedding_provider, build_translation_provider
+from core.factory import (
+    build_embedding_provider,
+    build_fusion_strategy,
+    build_translation_provider,
+)
 from core.search import SearchService
 
 from pipeline.stages import run_embed, run_index, run_ingest, run_translate
@@ -33,6 +37,12 @@ def main() -> None:
         "--fake", action="store_true", help="use offline fake providers"
     )
     parser.add_argument("--top-k", type=int, default=10)
+    parser.add_argument(
+        "--fusion",
+        choices=["rrf", "weighted_sum"],
+        default=None,
+        help="override fusion strategy for the search command",
+    )
     args = parser.parse_args()
 
     store = LocalDocumentStore(settings.data_dir)
@@ -53,7 +63,7 @@ def main() -> None:
             run_embed(store, build_embedding_provider(args.fake))
             run_index(store, backend)
         case "search":
-            _search(store, backend, args.query, args.top_k, args.fake)
+            _search(store, backend, args.query, args.top_k, args.fake, args.fusion)
 
 
 def _search(
@@ -62,12 +72,19 @@ def _search(
     query: str | None,
     top_k: int,
     fake: bool,
+    fusion_name: str | None,
 ) -> None:
     if not query:
         raise SystemExit("search requires a query argument")
     backend.load()
-    service = SearchService(store, backend, build_embedding_provider(fake))
-    for result in service.search(query, top_k=top_k):
+    service = SearchService(
+        store,
+        backend,
+        build_embedding_provider(fake),
+        build_fusion_strategy(),
+    )
+    fusion_override = build_fusion_strategy(fusion_name) if fusion_name else None
+    for result in service.search(query, top_k=top_k, fusion=fusion_override):
         matched = ", ".join(f"{m.field}/{m.lang}" for m in result.matched[:3])
         print(f"{result.score:.3f}  {result.title}  ({matched})")
 

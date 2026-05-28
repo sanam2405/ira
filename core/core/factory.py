@@ -12,12 +12,13 @@ from core.adapters.embedding import (
     GeminiBatchEmbeddingProvider,
     GeminiEmbeddingProvider,
 )
+from core.adapters.fusion import RRFFusion, WeightedSumFusion
 from core.adapters.translation import (
     FakeTranslationProvider,
     GeminiTranslationProvider,
 )
 from core.config import settings
-from core.ports import EmbeddingProvider, TranslationProvider
+from core.ports import EmbeddingProvider, FusionStrategy, TranslationProvider
 
 logger = structlog.get_logger(__name__).bind(context="factory")
 
@@ -45,3 +46,15 @@ def build_translation_provider(fake: bool = False) -> TranslationProvider:
     return GeminiTranslationProvider(
         settings.gemini_api_key, settings.translation_model
     )
+
+
+def build_fusion_strategy(name: str | None = None) -> FusionStrategy:
+    """`name` overrides settings.fusion_strategy when supplied (per-call A/B testing)."""
+    choice = name or settings.fusion_strategy
+    match choice:
+        case "rrf":
+            return RRFFusion(k=settings.rrf_k)
+        case "weighted_sum":
+            return WeightedSumFusion()
+        case _:
+            raise ValueError(f"unknown fusion strategy: {choice!r}")

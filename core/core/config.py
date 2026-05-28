@@ -6,6 +6,7 @@ here so adapters read config rather than hard-coding. Override any field via env
 """
 
 from pathlib import Path
+from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -45,14 +46,14 @@ class Settings(BaseSettings):
     chunk_target_tokens: int = 1200  # well under embedding_max_tokens, leaves headroom
     chunk_overlap_tokens: int = 100
 
-    # --- search (hybrid ranking) ---
-    search_alpha: float = 1.0  # weight on semantic similarity
-    search_beta: float = (
-        0.3  # weight on soft metadata-filter matches (re-rank, not exclude)
-    )
+    # --- search (hybrid ranking, via FusionStrategy port) ---
     search_overfetch: int = (
         10  # chunk hits per requested song (multi-vector aggregation)
     )
+    fusion_strategy: Literal["rrf", "weighted_sum"] = "rrf"
+    fusion_w_semantic: float = 1.0  # weight on the semantic ranked list
+    fusion_w_filter: float = 0.5  # weight on the soft-metadata-filter ranked list
+    rrf_k: int = 60  # RRF damping constant — canonical default
 
     # --- concurrency (Gemini calls are blocking HTTP -> threads help) ---
     embedding_concurrency: int = 8  # parallel embed batches
